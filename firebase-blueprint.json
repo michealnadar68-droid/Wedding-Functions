@@ -1,0 +1,162 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role-based access for customers, vendors, and admins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "name": { "type": "string", "description": "User full name or business contact name" },
+        "email": { "type": "string", "description": "User email address" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "role": { "type": "string", "enum": ["customer", "vendor", "admin"], "description": "Access role" },
+        "occasionType": { "type": "string", "description": "Target occasion type" },
+        "weddingDate": { "type": "string", "description": "Scheduled event date" },
+        "targetBudget": { "type": "number", "description": "Target wedding or event budget" },
+        "location": { "type": "string", "description": "User city or region" },
+        "avatarUrl": { "type": "string", "description": "Profile picture URL" },
+        "vendorType": { "type": "string", "enum": ["hall", "caterer", "photographer", "decor"], "description": "Sector category for vendor" },
+        "vendorBusinessName": { "type": "string", "description": "Vendor business trading name" },
+        "vendorCity": { "type": "string", "description": "Vendor city" },
+        "vendorState": { "type": "string", "description": "Vendor state" },
+        "vendorApproved": { "type": "boolean", "description": "Vendor verification status" },
+        "vendorGSTIN": { "type": "string", "description": "Vendor GST registration number" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of account creation" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "BookingRecord": {
+      "title": "BookingRecord",
+      "description": "Event booking reservation for hall, caterer, photographer, or decorator",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique booking record ID" },
+        "referenceId": { "type": "string", "description": "Elysian reference code" },
+        "userId": { "type": "string", "description": "User account ID who placed the booking" },
+        "serviceType": { "type": "string", "enum": ["hall", "caterer", "photographer", "decor"], "description": "Type of service reserved" },
+        "vendorId": { "type": "string", "description": "ID of the vendor being booked" },
+        "serviceTitle": { "type": "string", "description": "Title of the hall or vendor" },
+        "serviceSubtitle": { "type": "string", "description": "Package or tier name" },
+        "packageTier": { "type": "string", "description": "Chosen package tier" },
+        "eventDate": { "type": "string", "description": "Event date in YYYY-MM-DD" },
+        "timeWindow": { "type": "string", "description": "Time slot window" },
+        "guestCount": { "type": "number", "description": "Estimated guest count" },
+        "basePrice": { "type": "number", "description": "Base price amount" },
+        "taxAmount": { "type": "number", "description": "GST or service tax amount" },
+        "totalAmount": { "type": "number", "description": "Total contract value" },
+        "depositPaid": { "type": "number", "description": "Deposit amount paid" },
+        "status": { "type": "string", "enum": ["Inquiry", "Pending Payment", "Deposit Paid", "Confirmed", "Completed", "Cancelled"], "description": "Current lifecycle status" },
+        "clientName": { "type": "string", "description": "Client full name" },
+        "clientEmail": { "type": "string", "description": "Client email" },
+        "clientPhone": { "type": "string", "description": "Client contact phone" },
+        "specialRequests": { "type": "string", "description": "Custom requirements and notes" },
+        "createdAt": { "type": "string", "description": "Timestamp of reservation creation" }
+      },
+      "required": ["id", "referenceId", "userId", "serviceType", "vendorId", "serviceTitle", "eventDate", "totalAmount", "status"]
+    },
+    "FavoriteItem": {
+      "title": "FavoriteItem",
+      "description": "Shortlisted vendor or hall saved by a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Favorite record ID" },
+        "userId": { "type": "string", "description": "User ID who favorited" },
+        "vendorId": { "type": "string", "description": "Target vendor ID" },
+        "vendorType": { "type": "string", "enum": ["hall", "caterer", "photographer", "decor"], "description": "Vendor category" },
+        "vendorName": { "type": "string", "description": "Name of vendor" },
+        "vendorSubtitle": { "type": "string", "description": "Short description" },
+        "vendorImage": { "type": "string", "description": "Thumbnail image URL" },
+        "rating": { "type": "number", "description": "Review score rating" },
+        "priceFormatted": { "type": "string", "description": "Price display string" },
+        "location": { "type": "string", "description": "Location description" },
+        "savedAt": { "type": "string", "description": "Timestamp when favorited" },
+        "notes": { "type": "string", "description": "User personal notes" }
+      },
+      "required": ["id", "userId", "vendorId", "vendorType", "vendorName"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Chat thread between customer and vendor concierge desk",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Conversation ID" },
+        "vendorId": { "type": "string", "description": "Vendor ID" },
+        "vendorType": { "type": "string", "description": "Vendor category" },
+        "vendorName": { "type": "string", "description": "Vendor display title" },
+        "vendorSubtitle": { "type": "string", "description": "Vendor subhead" },
+        "vendorAvatar": { "type": "string", "description": "Avatar image URL" },
+        "vendorContactName": { "type": "string", "description": "Concierge contact person" },
+        "vendorRole": { "type": "string", "description": "Role of contact" },
+        "vendorOnline": { "type": "boolean", "description": "Presence indicator" },
+        "vendorTyping": { "type": "boolean", "description": "Typing indicator" },
+        "unreadCount": { "type": "number", "description": "Unread message count" },
+        "lastMessage": { "type": "string", "description": "Snippet of last message" },
+        "lastMessageTime": { "type": "string", "description": "Formatted time of last message" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "vendorId", "vendorName"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual message within a conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Message ID" },
+        "conversationId": { "type": "string", "description": "Parent conversation ID" },
+        "senderId": { "type": "string", "enum": ["user", "vendor", "system"], "description": "Sender identifier" },
+        "senderName": { "type": "string", "description": "Sender display name" },
+        "text": { "type": "string", "description": "Text body of message" },
+        "timestamp": { "type": "string", "description": "Formatted timestamp" },
+        "status": { "type": "string", "enum": ["sending", "delivered", "read"], "description": "Delivery status" }
+      },
+      "required": ["id", "conversationId", "senderId", "text", "timestamp"]
+    },
+    "VendorSubmission": {
+      "title": "VendorSubmission",
+      "description": "Vendor-submitted listing pending admin moderation or approval",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Submission ID" },
+        "category": { "type": "string", "enum": ["hall", "caterer", "photographer", "decor"], "description": "Service category" },
+        "title": { "type": "string", "description": "Listing title" },
+        "location": { "type": "string", "description": "Location string" },
+        "price": { "type": "number", "description": "Price / starting rate" },
+        "vendorName": { "type": "string", "description": "Vendor contact name" },
+        "vendorEmail": { "type": "string", "description": "Vendor email" },
+        "imageUrl": { "type": "string", "description": "Main showcase image URL" },
+        "description": { "type": "string", "description": "Listing description" },
+        "approvalStatus": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Moderation status" },
+        "approvalNotes": { "type": "string", "description": "Admin review feedback" },
+        "submittedAt": { "type": "string", "description": "Submission timestamp" },
+        "reviewedAt": { "type": "string", "description": "Review timestamp" }
+      },
+      "required": ["id", "category", "title", "approvalStatus", "submittedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile records containing personal details and role permissions"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "BookingRecord",
+      "description": "Event booking records for marriage halls, catering, photography, and decor"
+    },
+    "/favorites/{favoriteId}": {
+      "schema": "FavoriteItem",
+      "description": "Shortlisted vendor items saved to customer wishlists"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Chat channels between clients and vendor concierge teams"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Individual chat messages inside a conversation channel"
+    },
+    "/vendorSubmissions/{submissionId}": {
+      "schema": "VendorSubmission",
+      "description": "Custom vendor listings and pending approval requests"
+    }
+  }
+}

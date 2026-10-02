@@ -1,0 +1,8 @@
+{
+  "name": "Elysian Wedlock - Luxury Wedding Booking Platform",
+  "description": "Pan-India luxury celebration and venue booking platform featuring grand banquet halls, kalyana mandapams, multi-faith catering, milestone photographers and custom decor for weddings, 1st birthdays, sacred Vedic rituals, and cultural celebrations from A to Z.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
