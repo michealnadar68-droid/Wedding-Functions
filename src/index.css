@@ -13,10 +13,20 @@
     --color-text-muted: #666666;
   }
 
-  body {
+  html, body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #1A1A1A;
     background-color: #FDFCFB;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  #root {
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    min-height: 100vh;
   }
 
   h1, h2, h3, h4, .font-serif-luxury {

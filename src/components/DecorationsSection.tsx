@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Palette, 
   MapPin, 
@@ -16,7 +16,9 @@ import {
   Award,
   TrendingUp,
   Eye,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  Ban
 } from 'lucide-react';
 import { DecorationTheme, BundleItem } from '../types';
 import { db } from '../services/databaseService';
@@ -25,6 +27,7 @@ import { formatINR } from '../utils/formatters';
 interface DecorationsSectionProps {
   decorations: DecorationTheme[];
   activeSort: 'default' | 'top-rated' | 'most-liked';
+  selectedDate?: string;
   onSetSort: (sort: 'default' | 'top-rated' | 'most-liked') => void;
   onToggleLike: (themeId: string) => void;
   onBookDecor: (decor: DecorationTheme) => void;
@@ -44,6 +47,7 @@ interface DecorationsSectionProps {
 export const DecorationsSection: React.FC<DecorationsSectionProps> = ({
   decorations,
   activeSort,
+  selectedDate,
   onSetSort,
   onToggleLike,
   onBookDecor,
@@ -52,6 +56,13 @@ export const DecorationsSection: React.FC<DecorationsSectionProps> = ({
   onOpenChatWithVendor
 }) => {
   const [selectedPaletteTheme, setSelectedPaletteTheme] = useState<string | null>(null);
+  const [dbVersion, setDbVersion] = useState(0);
+
+  useEffect(() => {
+    const handleDbUpdate = () => setDbVersion(v => v + 1);
+    window.addEventListener('elysian_db_update', handleDbUpdate);
+    return () => window.removeEventListener('elysian_db_update', handleDbUpdate);
+  }, []);
 
   // Sorting logic based on active tab
   const sortedDecorations = [...decorations].sort((a, b) => {
@@ -135,6 +146,8 @@ export const DecorationsSection: React.FC<DecorationsSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {sortedDecorations.map((decor) => {
             const isAddedToBundle = bundleDecorIds.includes(decor.id);
+            const bookedDates = db.getBookedDatesForVendor(decor.id, decor.name);
+            const isBookedOnSelectedDate = selectedDate ? bookedDates.includes(selectedDate) : false;
 
             return (
               <div
@@ -295,14 +308,26 @@ export const DecorationsSection: React.FC<DecorationsSectionProps> = ({
 
                 {/* Bottom Actions: Reserve, Live Chat, Add to Package */}
                 <div className="p-5 sm:p-6 pt-0 border-t border-[#F0EBE1] flex flex-col sm:flex-row items-stretch gap-2.5">
-                  <button
-                    id={`book-decor-btn-${decor.id}`}
-                    onClick={() => onBookDecor(decor)}
-                    className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
-                  >
-                    <Calendar className="w-4 h-4 text-[#C5A059]" />
-                    <span>Reserve Theme ({formatINR(decor.price)})</span>
-                  </button>
+                  {isBookedOnSelectedDate ? (
+                    <button
+                      id={`book-decor-btn-${decor.id}`}
+                      onClick={() => onBookDecor(decor)}
+                      className="flex-1 py-3 px-4 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                      title={`Booked on ${selectedDate}. Click to choose another date.`}
+                    >
+                      <Ban className="w-4 h-4 text-red-600" />
+                      <span>Booked on {selectedDate} (Switch Date)</span>
+                    </button>
+                  ) : (
+                    <button
+                      id={`book-decor-btn-${decor.id}`}
+                      onClick={() => onBookDecor(decor)}
+                      className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                    >
+                      <Calendar className="w-4 h-4 text-[#C5A059]" />
+                      <span>Reserve Theme ({formatINR(decor.price)})</span>
+                    </button>
+                  )}
 
                   {onOpenChatWithVendor && (
                     <button

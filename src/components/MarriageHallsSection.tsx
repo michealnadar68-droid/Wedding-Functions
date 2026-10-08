@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -20,7 +20,9 @@ import {
   Navigation,
   Heart,
   MessageSquare,
-  Compass
+  Compass,
+  Lock,
+  Ban
 } from 'lucide-react';
 import { MarriageHall, PricePackage, BundleItem } from '../types';
 import { db } from '../services/databaseService';
@@ -29,6 +31,7 @@ import { formatINR, formatDistanceKm } from '../utils/formatters';
 interface MarriageHallsSectionProps {
   halls: MarriageHall[];
   topRatedOnly: boolean;
+  selectedDate?: string;
   onToggleTopRated: () => void;
   onBookHall: (hall: MarriageHall, selectedPkg?: PricePackage) => void;
   onAddToBundle: (item: BundleItem) => void;
@@ -48,6 +51,7 @@ interface MarriageHallsSectionProps {
 export const MarriageHallsSection: React.FC<MarriageHallsSectionProps> = ({
   halls,
   topRatedOnly,
+  selectedDate,
   onToggleTopRated,
   onBookHall,
   onAddToBundle,
@@ -58,6 +62,13 @@ export const MarriageHallsSection: React.FC<MarriageHallsSectionProps> = ({
   const [selectedPackages, setSelectedPackages] = useState<Record<string, string>>({});
   const [activeGalleryHall, setActiveGalleryHall] = useState<MarriageHall | null>(null);
   const [favRefresh, setFavRefresh] = useState(0);
+  const [dbVersion, setDbVersion] = useState(0);
+
+  useEffect(() => {
+    const handleDbUpdate = () => setDbVersion(v => v + 1);
+    window.addEventListener('elysian_db_update', handleDbUpdate);
+    return () => window.removeEventListener('elysian_db_update', handleDbUpdate);
+  }, []);
 
   const handleSelectPackage = (hallId: string, pkgId: string) => {
     setSelectedPackages(prev => ({ ...prev, [hallId]: pkgId }));
@@ -131,6 +142,8 @@ export const MarriageHallsSection: React.FC<MarriageHallsSectionProps> = ({
             const isAddedToBundle = bundleHallIds.includes(hall.id);
             const activePkgId = selectedPackages[hall.id] || hall.pricePackages[0]?.id;
             const currentPkg = hall.pricePackages.find(p => p.id === activePkgId) || hall.pricePackages[0];
+            const bookedDates = db.getBookedDatesForVendor(hall.id, hall.name);
+            const isBookedOnSelectedDate = selectedDate ? bookedDates.includes(selectedDate) : false;
 
             return (
               <div
@@ -158,16 +171,23 @@ export const MarriageHallsSection: React.FC<MarriageHallsSectionProps> = ({
 
                     {/* Live Booking Status & Favorite Heart */}
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${
-                        hall.bookingStatus === 'Available'
-                          ? 'bg-[#246A42] text-white'
-                          : hall.bookingStatus === 'Fast Filling'
-                          ? 'bg-[#C5A059] text-white animate-pulse'
-                          : 'bg-[#1A1A1A] text-stone-300'
-                      }`}>
-                        <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                        {hall.bookingStatus === 'Fast Filling' ? `Fast Filling (${hall.availableSlotsLeft || 2} left)` : hall.bookingStatus}
-                      </span>
+                      {isBookedOnSelectedDate ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-md bg-red-600 text-white">
+                          <Ban className="w-3.5 h-3.5 text-white" />
+                          <span>Booked ({selectedDate})</span>
+                        </span>
+                      ) : (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${
+                          hall.bookingStatus === 'Available'
+                            ? 'bg-[#246A42] text-white'
+                            : hall.bookingStatus === 'Fast Filling'
+                            ? 'bg-[#C5A059] text-white animate-pulse'
+                            : 'bg-[#1A1A1A] text-stone-300'
+                        }`}>
+                          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                          {hall.bookingStatus === 'Fast Filling' ? `Fast Filling (${hall.availableSlotsLeft || 2} left)` : hall.bookingStatus}
+                        </span>
+                      )}
 
                       {/* Wishlist Heart Toggle */}
                       <button
@@ -267,6 +287,24 @@ export const MarriageHallsSection: React.FC<MarriageHallsSectionProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  {/* Reserved Dates Escrow Lock Badge - wraps vertically */}
+                  {bookedDates.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] bg-red-50/70 border border-red-200/90 p-2.5 rounded-xl text-red-950">
+                      <div className="flex items-center gap-1.5 text-red-900 font-bold shrink-0">
+                        <Lock className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                        <span>Reserved Dates:</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 items-center flex-1 min-w-0">
+                        {bookedDates.map((d) => (
+                          <span key={d} className="font-mono text-[10px] font-bold bg-red-100 text-red-800 px-1.5 py-0.5 rounded border border-red-200">
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-red-600 font-semibold italic shrink-0">(Locked)</span>
+                    </div>
+                  )}
 
                   {/* Available Time Windows & Days */}
                   <div className="space-y-1.5">
@@ -374,14 +412,26 @@ export const MarriageHallsSection: React.FC<MarriageHallsSectionProps> = ({
                   <div className="pt-3 border-t border-[#F0EBE1] flex flex-col sm:flex-row items-stretch gap-2.5">
                     
                     {/* Primary Booking Button */}
-                    <button
-                      id={`book-hall-btn-${hall.id}`}
-                      onClick={() => onBookHall(hall, currentPkg)}
-                      className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
-                    >
-                      <Calendar className="w-4 h-4 text-[#C5A059]" />
-                      <span>Book Now ({currentPkg ? formatINR(currentPkg.price) : formatINR(hall.basePrice)})</span>
-                    </button>
+                    {isBookedOnSelectedDate ? (
+                      <button
+                        id={`book-hall-btn-${hall.id}`}
+                        onClick={() => onBookHall(hall, currentPkg)}
+                        className="flex-1 py-3 px-4 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                        title={`Booked on ${selectedDate}. Click to view details and pick another date.`}
+                      >
+                        <Ban className="w-4 h-4 text-red-600" />
+                        <span>Booked on {selectedDate} (Switch Date)</span>
+                      </button>
+                    ) : (
+                      <button
+                        id={`book-hall-btn-${hall.id}`}
+                        onClick={() => onBookHall(hall, currentPkg)}
+                        className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                      >
+                        <Calendar className="w-4 h-4 text-[#C5A059]" />
+                        <span>Book Now ({currentPkg ? formatINR(currentPkg.price) : formatINR(hall.basePrice)})</span>
+                      </button>
+                    )}
 
                     {/* Chat with Venue Concierge Button */}
                     {onOpenChatWithVendor && (

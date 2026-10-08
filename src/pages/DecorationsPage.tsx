@@ -64,6 +64,7 @@ export const DecorationsPage: React.FC<DecorationsPageProps> = ({
       <DecorationsSection
         decorations={decorations}
         activeSort={filters.decorSortBy || 'default'}
+        selectedDate={filters.selectedDate}
         onSetSort={(sort) => onFilterChange({ decorSortBy: sort })}
         onToggleLike={onToggleLike}
         onBookDecor={onBookDecor}

@@ -64,6 +64,7 @@ export const HallsPage: React.FC<HallsPageProps> = ({
       <MarriageHallsSection
         halls={halls}
         topRatedOnly={filters.hallTopRatedOnly || false}
+        selectedDate={filters.selectedDate}
         onToggleTopRated={() => onFilterChange({ hallTopRatedOnly: !filters.hallTopRatedOnly })}
         onBookHall={onBookHall}
         onAddToBundle={onAddToBundle}

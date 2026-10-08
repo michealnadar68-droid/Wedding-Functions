@@ -406,9 +406,9 @@ export const ChatModal: React.FC<ChatModalProps> = ({
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Inquiry Suggestion Chips */}
-            <div className="p-2.5 bg-[#F9F7F2] border-t border-[#E5E0D5] overflow-x-auto flex items-center gap-2 scrollbar-none">
-              <span className="text-[10px] uppercase font-bold text-[#888888] whitespace-nowrap pl-1">
+            {/* Quick Inquiry Suggestion Chips - vertical wrapping with zero horizontal scroll */}
+            <div className="p-2.5 bg-[#F9F7F2] border-t border-[#E5E0D5] flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] uppercase font-bold text-[#888888] pl-1 mr-1">
                 Quick Prompts:
               </span>
               {[
@@ -420,7 +420,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                 <button
                   key={idx}
                   onClick={() => handleSendPrompt(prompt)}
-                  className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F3EB] border border-[#E5E0D5] hover:border-[#C5A059] text-[11px] text-[#1A1A1A] whitespace-nowrap transition-all cursor-pointer shadow-2xs"
+                  className="px-2.5 py-1 rounded-full bg-white hover:bg-[#F7F3EB] border border-[#E5E0D5] hover:border-[#C5A059] text-[11px] text-[#1A1A1A] transition-all cursor-pointer shadow-2xs text-left"
                 >
                   {prompt}
                 </button>

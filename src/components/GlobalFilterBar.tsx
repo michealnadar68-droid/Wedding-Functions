@@ -129,8 +129,8 @@ export const GlobalFilterBar: React.FC<GlobalFilterBarProps> = ({
           )}
         </div>
 
-        {/* Sector Tabs Switcher */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+        {/* Sector Tabs Switcher - purely vertical wrapping with zero horizontal scroll */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 lg:pt-0">
           {[
             { id: 'all', label: 'All Services', icon: <Layers className="w-3.5 h-3.5" /> },
             { id: 'halls', label: 'Marriage Halls & Mandapams', icon: <Building2 className="w-3.5 h-3.5" /> },
@@ -144,14 +144,14 @@ export const GlobalFilterBar: React.FC<GlobalFilterBarProps> = ({
                 key={tab.id}
                 id={`filter-sector-${tab.id}`}
                 onClick={() => onFilterChange({ category: tab.id as ServiceCategory })}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-[#1A1A1A] text-[#C5A059] shadow-2xs'
                     : 'bg-[#F9F7F2] hover:bg-[#EAE4D7]/60 text-[#555555] hover:text-[#1A1A1A] border border-[#E5E0D5]'
                 }`}
               >
                 {tab.icon}
-                {tab.label}
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -159,9 +159,9 @@ export const GlobalFilterBar: React.FC<GlobalFilterBarProps> = ({
 
       </div>
 
-      {/* Quick Occasion Selection Bar */}
-      <div className="py-3 border-b border-[#F0EBE1] flex items-center gap-2 overflow-x-auto scrollbar-none">
-        <span className="text-[11px] font-bold text-[#888888] uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
+      {/* Quick Occasion Selection Bar - wraps naturally vertically */}
+      <div className="py-3 border-b border-[#F0EBE1] flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-bold text-[#888888] uppercase tracking-wider flex items-center gap-1 mr-1">
           <Gift className="w-3 h-3 text-[#C5A059]" /> Quick Occasion:
         </span>
         {[
@@ -177,7 +177,7 @@ export const GlobalFilterBar: React.FC<GlobalFilterBarProps> = ({
             <button
               key={quickOccasion.label}
               onClick={() => onFilterChange({ occasion: quickOccasion.val })}
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#8C6A24] text-white shadow-2xs'
                   : 'bg-[#F9F7F2] hover:bg-[#EAE4D7] text-[#555555] border border-[#E5E0D5]'

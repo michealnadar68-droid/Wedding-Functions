@@ -2146,7 +2146,46 @@ export const MultiRolePortalPage: React.FC<MultiRolePortalPageProps> = ({
                       </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    {/* Mobile Vertical Stacked Cards (Zero horizontal scroll) */}
+                    <div className="md:hidden space-y-3">
+                      {adminBookings.map((b) => (
+                        <div key={`m-${b.id || b.referenceId}`} className="p-4 bg-[#FDFCFB] rounded-xl border border-[#E5E0D5] space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs font-bold text-[#8C6A24]">{b.referenceId}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              b.status === 'Confirmed' ? 'bg-[#EBF5EF] text-[#246A42]' : 'bg-[#F7F3EB] text-[#8C6A24]'
+                            }`}>
+                              {b.status}
+                            </span>
+                          </div>
+                          <div>
+                            <strong className="text-xs text-[#1A1A1A] block">{b.clientName}</strong>
+                            <span className="text-[11px] text-[#666666]">{b.clientPhone}</span>
+                          </div>
+                          <div className="text-xs text-[#1A1A1A]">
+                            <span className="font-medium">{b.serviceTitle}</span>
+                            <span className="block text-[10px] text-[#888888]">{b.serviceSubtitle}</span>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t border-[#F0EBE1] text-xs">
+                            <span className="text-[11px] text-[#666666]">Date: <strong>{b.eventDate}</strong></span>
+                            <span className="font-mono font-bold text-[#246A42]">{formatINR(b.totalAmount * 83)}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const nextStatus = b.status === 'Deposit Paid' ? 'Confirmed' : 'Deposit Paid';
+                              db.updateSystemBookingStatus(b.id, nextStatus as any);
+                              onShowToast(`Updated status of ${b.referenceId} to ${nextStatus}`);
+                            }}
+                            className="w-full py-1.5 bg-[#F9F7F2] hover:bg-[#1A1A1A] hover:text-[#C5A059] border border-[#E5E0D5] rounded-lg text-xs font-bold transition-colors cursor-pointer text-center"
+                          >
+                            Toggle Status
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
                           <tr className="border-b border-[#E5E0D5] text-[#888888] uppercase text-[10px]">

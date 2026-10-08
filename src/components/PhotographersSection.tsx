@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Camera, 
   MapPin, 
@@ -17,7 +17,9 @@ import {
   Clock, 
   Compass,
   Heart,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  Ban
 } from 'lucide-react';
 import { Photographer, BundleItem } from '../types';
 import { db } from '../services/databaseService';
@@ -50,6 +52,13 @@ export const PhotographersSection: React.FC<PhotographersSectionProps> = ({
   const [selectedDates, setSelectedDates] = useState<Record<string, string>>({});
   const [expandedCalendarId, setExpandedCalendarId] = useState<string | null>(null);
   const [favRefresh, setFavRefresh] = useState(0);
+  const [dbVersion, setDbVersion] = useState(0);
+
+  useEffect(() => {
+    const handleDbUpdate = () => setDbVersion(v => v + 1);
+    window.addEventListener('elysian_db_update', handleDbUpdate);
+    return () => window.removeEventListener('elysian_db_update', handleDbUpdate);
+  }, []);
 
   const handleNextImage = (photographerId: string, maxImages: number) => {
     setActiveImageIndexes(prev => ({
@@ -146,7 +155,10 @@ export const PhotographersSection: React.FC<PhotographersSectionProps> = ({
             const isAddedToBundle = bundlePhotographerIds.includes(photographer.id);
             const activeImgIdx = activeImageIndexes[photographer.id] || 0;
             const currentImg = photographer.portfolioImages[activeImgIdx] || photographer.portfolioImages[0];
+            const realTimeBookedDates = db.getBookedDatesForVendor(photographer.id, photographer.name);
+            const allBookedDates = Array.from(new Set([...(photographer.bookedDates || []), ...realTimeBookedDates]));
             const activeSelectedDate = selectedDates[photographer.id] || '2026-08-28';
+            const isSelectedDateBooked = allBookedDates.includes(activeSelectedDate);
 
             return (
               <div
@@ -236,8 +248,8 @@ export const PhotographersSection: React.FC<PhotographersSectionProps> = ({
                     </div>
                   </div>
 
-                  {/* Portfolio Thumbnails Bar */}
-                  <div className="flex gap-1.5 p-2 bg-[#F9F7F2] border-b border-[#E5E0D5] overflow-x-auto scrollbar-none">
+                  {/* Portfolio Thumbnails Bar - vertical wrapping with zero horizontal scroll */}
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-[#F9F7F2] border-b border-[#E5E0D5]">
                     {photographer.portfolioImages.map((img, idx) => (
                       <button
                         key={idx}
@@ -331,7 +343,7 @@ export const PhotographersSection: React.FC<PhotographersSectionProps> = ({
                       {/* Mini Scrollable 14-Day Calendar Grid */}
                       <div className="grid grid-cols-7 gap-1 text-center">
                         {upcomingDays.slice(0, 7).map(({ dateStr, dayName, dayNum }) => {
-                          const isBooked = photographer.bookedDates.includes(dateStr);
+                          const isBooked = allBookedDates.includes(dateStr);
                           const isFastFilling = photographer.fastFillingDates.includes(dateStr);
                           const isSelected = activeSelectedDate === dateStr;
 
@@ -364,7 +376,7 @@ export const PhotographersSection: React.FC<PhotographersSectionProps> = ({
                       {/* Second Row of upcoming dates */}
                       <div className="grid grid-cols-7 gap-1 text-center">
                         {upcomingDays.slice(7, 14).map(({ dateStr, dayName, dayNum }) => {
-                          const isBooked = photographer.bookedDates.includes(dateStr);
+                          const isBooked = allBookedDates.includes(dateStr);
                           const isFastFilling = photographer.fastFillingDates.includes(dateStr);
                           const isSelected = activeSelectedDate === dateStr;
 
@@ -414,14 +426,26 @@ export const PhotographersSection: React.FC<PhotographersSectionProps> = ({
 
                 {/* Bottom Actions: "Book Now / Check Dates", "Live Chat", + "Add to Package" */}
                 <div className="p-5 sm:p-6 pt-0 border-t border-[#F0EBE1] flex flex-col sm:flex-row items-stretch gap-2.5">
-                  <button
-                    id={`book-photographer-btn-${photographer.id}`}
-                    onClick={() => onBookPhotographer(photographer, activeSelectedDate)}
-                    className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
-                  >
-                    <CalendarIcon className="w-4 h-4 text-[#C5A059]" />
-                    <span>Lock Date ({formatINR(photographer.pricePerDay)})</span>
-                  </button>
+                  {isSelectedDateBooked ? (
+                    <button
+                      id={`book-photographer-btn-${photographer.id}`}
+                      disabled={true}
+                      className="flex-1 py-3 px-4 rounded-xl bg-red-100 border border-red-300 text-red-700 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                      title="This date is already booked by another person"
+                    >
+                      <Ban className="w-4 h-4 text-red-600" />
+                      <span>{activeSelectedDate} Already Booked</span>
+                    </button>
+                  ) : (
+                    <button
+                      id={`book-photographer-btn-${photographer.id}`}
+                      onClick={() => onBookPhotographer(photographer, activeSelectedDate)}
+                      className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                    >
+                      <CalendarIcon className="w-4 h-4 text-[#C5A059]" />
+                      <span>Lock Date ({formatINR(photographer.pricePerDay)})</span>
+                    </button>
+                  )}
 
                   {onOpenChatWithVendor && (
                     <button

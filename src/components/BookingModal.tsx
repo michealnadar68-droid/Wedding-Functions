@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   X, 
   Calendar, 
@@ -21,12 +21,17 @@ import {
   Check,
   CreditCard,
   Lock,
-  ArrowRight
+  ArrowRight,
+  AlertCircle,
+  Ban,
+  ShieldAlert
 } from 'lucide-react';
 import { BookingDetails } from '../types';
 import { formatINR } from '../utils/formatters';
 import { RazorpayPaymentModal } from './RazorpayPaymentModal';
 import { generateInvoicePdf } from '../utils/invoicePdfGenerator';
+import { db } from '../services/databaseService';
+import { AUSPICIOUS_MUHURTHAM_DATES } from '../utils/calendarSync';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -43,15 +48,47 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 }) => {
   if (!isOpen || !bookingData) return null;
 
+  const resolvedVendorId = bookingData.vendorId;
+  const resolvedServiceTitle = bookingData.serviceTitle || bookingData.vendorName || 'Wedding Service';
+
   const [formData, setFormData] = useState({
     clientName: '',
     clientEmail: '',
     clientPhone: '',
-    eventDate: bookingData.eventDate || '2026-09-18',
-    timeWindow: bookingData.timeWindow || 'Full Day Grand Access (6 AM - Midnight)',
+    eventDate: bookingData.eventDate || bookingData.selectedDate || '2026-09-18',
+    timeWindow: bookingData.timeWindow || bookingData.selectedTimeWindow || 'Full Day Grand Access (6 AM - Midnight)',
     guestCount: bookingData.guestCount || 350,
     specialRequests: ''
   });
+
+  const [dbVersion, setDbVersion] = useState(0);
+
+  useEffect(() => {
+    const handleDbUpdate = () => setDbVersion(v => v + 1);
+    window.addEventListener('elysian_db_update', handleDbUpdate);
+    return () => window.removeEventListener('elysian_db_update', handleDbUpdate);
+  }, []);
+
+  // Fetch all booked dates for this vendor across all clients
+  const vendorBookedDates = useMemo(() => {
+    return db.getBookedDatesForVendor(resolvedVendorId, resolvedServiceTitle);
+  }, [resolvedVendorId, resolvedServiceTitle, dbVersion]);
+
+  // Check if current chosen date is already booked by another person
+  const isDateAlreadyBooked = useMemo(() => {
+    return db.isDateBooked({
+      eventDate: formData.eventDate,
+      vendorId: resolvedVendorId,
+      serviceTitle: resolvedServiceTitle
+    });
+  }, [formData.eventDate, resolvedVendorId, resolvedServiceTitle, dbVersion]);
+
+  // Suggested alternative dates if current date is booked
+  const suggestedAlternativeDates = useMemo(() => {
+    return AUSPICIOUS_MUHURTHAM_DATES
+      .filter(m => !vendorBookedDates.includes(m.date) && m.date !== formData.eventDate)
+      .slice(0, 3);
+  }, [vendorBookedDates, formData.eventDate]);
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [generatedBookingId, setGeneratedBookingId] = useState('');
@@ -67,7 +104,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     discountAmount?: number;
   } | null>(null);
 
-  const basePrice = bookingData.itemPrice || 5000;
+  const basePrice = bookingData.itemPrice || bookingData.estimatedCost || 5000;
   const taxAmount = Math.round(basePrice * 0.05);
   const totalAmount = basePrice + taxAmount;
   const depositRequired = Math.round(totalAmount * 0.20);
@@ -79,6 +116,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       alert('Please fill in your name, email, and phone number.');
       return;
     }
+
+    if (isDateAlreadyBooked) {
+      alert(`⛔ Date Conflict: ${formData.eventDate} has already been reserved and locked by another client for "${resolvedServiceTitle}". Please select an alternate date.`);
+      return;
+    }
+
     setIsRazorpayOpen(true);
   };
 
@@ -90,6 +133,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     couponCode?: string;
     discountAmount?: number;
   }) => {
+    // Final concurrency guard
+    if (db.isDateBooked({ eventDate: formData.eventDate, vendorId: resolvedVendorId, serviceTitle: resolvedServiceTitle })) {
+      alert(`⛔ Date Conflict: ${formData.eventDate} was just booked by another user. Your payment will be refunded immediately.`);
+      return;
+    }
+
     const newId = `WED-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     setGeneratedBookingId(newId);
     setRazorpaySuccessData(paymentInfo);
@@ -99,15 +148,21 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     const completedBooking: BookingDetails & any = {
       id: newId,
       serviceType: bookingData.serviceType || 'hall',
-      serviceTitle: bookingData.serviceTitle || 'Wedding Booking',
+      serviceTitle: resolvedServiceTitle,
       serviceSubtitle: bookingData.serviceSubtitle || '',
+      vendorId: resolvedVendorId,
+      vendorName: bookingData.vendorName || resolvedServiceTitle,
       itemPrice: basePrice,
-      packageTier: bookingData.packageTier,
+      packageTier: bookingData.packageTier || bookingData.packageName,
       eventDate: formData.eventDate,
+      selectedDate: formData.eventDate,
       timeWindow: formData.timeWindow,
+      selectedTimeWindow: formData.timeWindow,
       guestCount: formData.guestCount,
       estimatedTotal: totalAmount - (paymentInfo.discountAmount || 0),
+      estimatedCost: basePrice,
       depositPaid: paymentInfo.amountPaid,
+      depositAmount: paymentInfo.amountPaid,
       clientName: formData.clientName,
       clientEmail: formData.clientEmail,
       clientPhone: formData.clientPhone,
@@ -232,22 +287,108 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
             </div>
 
+            {/* Date Conflict Warning Banner */}
+            {isDateAlreadyBooked && (
+              <div className="p-4 bg-red-50/90 border-2 border-red-300 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center shrink-0 mt-0.5">
+                    <Ban className="w-4 h-4 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-extrabold uppercase tracking-wider">
+                        Date Locked
+                      </span>
+                      <h4 className="text-xs sm:text-sm font-bold text-red-950">
+                        This Day is Already Booked by Another Person
+                      </h4>
+                    </div>
+                    <p className="text-xs text-red-800 mt-1 leading-relaxed">
+                      <strong>{formData.eventDate}</strong> has already been reserved and locked in Escrow for <strong>{resolvedServiceTitle}</strong>. Per strict anti-double-booking policy, another person cannot book this date.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick 1-Click Alternate Auspicious Dates */}
+                {suggestedAlternativeDates.length > 0 && (
+                  <div className="pt-2.5 border-t border-red-200">
+                    <span className="text-[11px] font-bold text-red-900 block mb-1.5 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Select an Available Auspicious Date:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedAlternativeDates.map((alt) => (
+                        <button
+                          key={alt.date}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, eventDate: alt.date })}
+                          className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-900 border border-emerald-300 hover:border-emerald-600 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                        >
+                          <Calendar className="w-3 h-3 text-emerald-600" />
+                          <span>{alt.date}</span>
+                          <span className="text-[10px] text-emerald-700 font-medium">({alt.title.split(' ')[0]})</span>
+                          <span className="text-[10px] text-emerald-600 font-extrabold underline ml-1">Switch →</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Event Details Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
               {/* Event Date */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#1A1A1A] flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-[#C5A059]" />
-                  Target Wedding / Event Date *
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#1A1A1A] flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#C5A059]" />
+                    Target Wedding / Event Date *
+                  </label>
+                  {isDateAlreadyBooked ? (
+                    <span className="text-[10px] font-bold text-red-600 flex items-center gap-1">
+                      <Ban className="w-3 h-3" /> Already Booked
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Available
+                    </span>
+                  )}
+                </div>
                 <input
                   type="date"
                   required
                   value={formData.eventDate}
                   onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                  className="w-full bg-[#F9F7F2] border border-[#E5E0D5] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1A1A1A] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C5A059]"
+                  className={`w-full rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium focus:outline-none transition-all ${
+                    isDateAlreadyBooked
+                      ? 'bg-red-50/60 border-2 border-red-500 text-red-900 ring-2 ring-red-200'
+                      : 'bg-[#F9F7F2] border border-[#E5E0D5] text-[#1A1A1A] focus:bg-white focus:ring-2 focus:ring-[#C5A059]'
+                  }`}
                 />
+
+                {/* Reserved Dates Indicator for Vendor */}
+                {vendorBookedDates.length > 0 && (
+                  <div className="pt-1 text-[11px] text-[#666666] space-y-1">
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-stone-700 uppercase tracking-wider">
+                      <Lock className="w-2.5 h-2.5 text-red-500" /> Currently Reserved Dates for this Venue:
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {vendorBookedDates.map(d => (
+                        <span
+                          key={d}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                            d === formData.eventDate
+                              ? 'bg-red-600 text-white shadow-xs'
+                              : 'bg-stone-200 text-stone-700 line-through'
+                          }`}
+                        >
+                          {d} {d === formData.eventDate ? '(Selected / Booked)' : '(Booked)'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Time Window */}
@@ -424,15 +565,28 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                id="submit-booking-btn"
-                className="w-full sm:flex-1 py-3.5 px-6 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Lock className="w-4 h-4 text-[#C5A059]" />
-                <span>Pay {formatINR(currentPayableAmount)} via Razorpay Gateway</span>
-                <ArrowRight className="w-4 h-4 text-[#C5A059]" />
-              </button>
+              {isDateAlreadyBooked ? (
+                <button
+                  type="button"
+                  id="submit-booking-btn-disabled"
+                  disabled={true}
+                  className="w-full sm:flex-1 py-3.5 px-6 rounded-xl bg-red-100 border border-red-300 text-red-700 font-bold text-xs shadow-none cursor-not-allowed flex items-center justify-center gap-2 select-none"
+                  title="This date is already booked by another person"
+                >
+                  <Ban className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>Date Already Booked — Please Select Available Date</span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  id="submit-booking-btn"
+                  className="w-full sm:flex-1 py-3.5 px-6 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Lock className="w-4 h-4 text-[#C5A059]" />
+                  <span>Pay {formatINR(currentPayableAmount)} via Razorpay Gateway</span>
+                  <ArrowRight className="w-4 h-4 text-[#C5A059]" />
+                </button>
+              )}
             </div>
 
           </form>
@@ -505,6 +659,21 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div className="flex justify-between pt-1 border-t border-[#C5A059]/30 font-bold text-[#1A1A1A]">
                 <span>Estimated Total:</span>
                 <span className="font-mono text-[#246A42]">{formatINR(totalAmount)}</span>
+              </div>
+            </div>
+
+            {/* Simulated Email Confirmation Dispatch Notice */}
+            <div className="p-3 bg-emerald-50/90 rounded-xl border border-emerald-200 max-w-md mx-auto text-left text-xs flex items-center gap-2.5 text-emerald-900 shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0 text-emerald-700">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="font-bold text-[11px] block text-emerald-950 flex items-center gap-1">
+                  ✓ Booking Confirmation Email Dispatched
+                </span>
+                <span className="text-[10px] text-emerald-800 truncate block">
+                  Simulated trigger sent to <strong>{formData.clientEmail || 'michealnadar68@gmail.com'}</strong>
+                </span>
               </div>
             </div>
 

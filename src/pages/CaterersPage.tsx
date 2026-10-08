@@ -64,6 +64,7 @@ export const CaterersPage: React.FC<CaterersPageProps> = ({
       <CaterersSection
         caterers={caterers}
         dietaryFilter={filters.dietaryFilter || 'all'}
+        selectedDate={filters.selectedDate}
         onSetDietaryFilter={(diet) => onFilterChange({ dietaryFilter: diet })}
         onOpenMenuModal={onOpenMenuModal}
         onBookCaterer={onBookCaterer}

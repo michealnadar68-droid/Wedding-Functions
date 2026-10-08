@@ -110,6 +110,7 @@ export const ExploreAllPage: React.FC<ExploreAllPageProps> = ({
         <MarriageHallsSection
           halls={halls}
           topRatedOnly={filters.hallTopRatedOnly || false}
+          selectedDate={filters.selectedDate}
           onToggleTopRated={() => onFilterChange({ hallTopRatedOnly: !filters.hallTopRatedOnly })}
           onBookHall={onBookHall}
           onAddToBundle={onAddToBundle}
@@ -121,6 +122,7 @@ export const ExploreAllPage: React.FC<ExploreAllPageProps> = ({
         <CaterersSection
           caterers={caterers}
           dietaryFilter={filters.dietaryFilter || 'all'}
+          selectedDate={filters.selectedDate}
           onSetDietaryFilter={(diet) => onFilterChange({ dietaryFilter: diet })}
           onOpenMenuModal={onOpenMenuModal}
           onBookCaterer={onBookCaterer}
@@ -140,6 +142,7 @@ export const ExploreAllPage: React.FC<ExploreAllPageProps> = ({
         <DecorationsSection
           decorations={decorations}
           activeSort={filters.decorSortBy || 'default'}
+          selectedDate={filters.selectedDate}
           onSetSort={(sort) => onFilterChange({ decorSortBy: sort })}
           onToggleLike={onToggleLike}
           onBookDecor={onBookDecor}

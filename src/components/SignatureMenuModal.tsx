@@ -110,14 +110,14 @@ export const SignatureMenuModal: React.FC<SignatureMenuModalProps> = ({
           </div>
         </div>
 
-        {/* Course Filter Tabs */}
+        {/* Course Filter Tabs - vertically wrapping with zero horizontal scroll */}
         <div className="p-4 sm:p-6 bg-[#F9F7F2] border-b border-[#E5E0D5]">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1">
+          <div className="flex flex-wrap items-center gap-1.5 pb-1">
             {courseCategories.map((course) => (
               <button
                 key={course}
                 onClick={() => setActiveCourseTab(course)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeCourseTab === course
                     ? 'bg-[#246A42] text-white shadow-xs'
                     : 'bg-white text-[#1A1A1A] hover:bg-[#F7F3EB] border border-[#E5E0D5]'

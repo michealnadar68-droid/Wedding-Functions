@@ -3,13 +3,15 @@ import {
   X, User, Heart, Calendar, DollarSign, CheckCircle2, 
   MessageSquare, Trash2, Printer, ArrowRight,
   ShieldCheck, Sparkles, Building2, Utensils, Camera, Palette, ExternalLink,
-  FileDown, Download
+  FileDown, Download, Mail
 } from 'lucide-react';
 import { db } from '../services/databaseService';
 import { UserProfile, FavoriteItem, BookingRecord, Conversation } from '../types';
 import { formatINR } from '../utils/formatters';
 import { generateGoogleCalendarUrl, downloadIcsFile, bookingToCalendarEvent } from '../utils/calendarSync';
 import { generateInvoicePdf } from '../utils/invoicePdfGenerator';
+import { mockEmailService, SentEmailRecord } from '../services/mockEmailService';
+import { EmailPreviewModal } from './EmailPreviewModal';
 
 interface UserProfileDashboardProps {
   isOpen: boolean;
@@ -54,6 +56,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [favCategoryFilter, setFavCategoryFilter] = useState<'all' | 'hall' | 'caterer' | 'photographer' | 'decor'>('all');
   const [selectedReceiptBooking, setSelectedReceiptBooking] = useState<BookingRecord | null>(null);
+  const [previewEmail, setPreviewEmail] = useState<SentEmailRecord | null>(null);
 
   // Settings form state
   const [editName, setEditName] = useState('');
@@ -241,12 +244,12 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
           </div>
         </div>
 
-        {/* Dashboard Navigation Tabs */}
-        <div className="bg-[#F9F7F2] border-b border-[#E5E0D5] px-6 flex items-center gap-2 overflow-x-auto scrollbar-none shrink-0">
+        {/* Dashboard Navigation Tabs - vertically wrapping with zero horizontal scroll */}
+        <div className="bg-[#F9F7F2] border-b border-[#E5E0D5] px-4 sm:px-6 py-1 flex flex-wrap items-center gap-1 sm:gap-2 shrink-0">
           <button
             id="tab-overview"
             onClick={() => setActiveTab('overview')}
-            className={`py-3.5 px-3 text-xs font-bold whitespace-nowrap transition-all border-b-2 cursor-pointer ${
+            className={`py-2.5 sm:py-3.5 px-3 text-xs font-bold transition-all border-b-2 cursor-pointer ${
               activeTab === 'overview'
                 ? 'border-[#C5A059] text-[#1A1A1A]'
                 : 'border-transparent text-[#666666] hover:text-[#1A1A1A]'
@@ -258,7 +261,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
           <button
             id="tab-favorites"
             onClick={() => setActiveTab('favorites')}
-            className={`py-3.5 px-3 text-xs font-bold whitespace-nowrap transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 sm:py-3.5 px-3 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'favorites'
                 ? 'border-[#C5A059] text-[#1A1A1A]'
                 : 'border-transparent text-[#666666] hover:text-[#1A1A1A]'
@@ -271,7 +274,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
           <button
             id="tab-bookings"
             onClick={() => setActiveTab('bookings')}
-            className={`py-3.5 px-3 text-xs font-bold whitespace-nowrap transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 sm:py-3.5 px-3 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'bookings'
                 ? 'border-[#C5A059] text-[#1A1A1A]'
                 : 'border-transparent text-[#666666] hover:text-[#1A1A1A]'
@@ -284,7 +287,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
           <button
             id="tab-messages"
             onClick={() => setActiveTab('messages')}
-            className={`py-3.5 px-3 text-xs font-bold whitespace-nowrap transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 sm:py-3.5 px-3 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'messages'
                 ? 'border-[#C5A059] text-[#1A1A1A]'
                 : 'border-transparent text-[#666666] hover:text-[#1A1A1A]'
@@ -297,7 +300,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
           <button
             id="tab-settings"
             onClick={() => setActiveTab('settings')}
-            className={`py-3.5 px-3 text-xs font-bold whitespace-nowrap transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 sm:py-3.5 px-3 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'settings'
                 ? 'border-[#C5A059] text-[#1A1A1A]'
                 : 'border-transparent text-[#666666] hover:text-[#1A1A1A]'
@@ -821,6 +824,37 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
                             <span>Print</span>
                           </button>
 
+                          <button
+                            onClick={async () => {
+                              const existingEmail = mockEmailService.getSentEmailByBookingId(booking.referenceId);
+                              if (existingEmail) {
+                                setPreviewEmail(existingEmail);
+                              } else {
+                                const generated = await mockEmailService.sendBookingConfirmationEmail({
+                                  bookingReference: booking.referenceId,
+                                  recipientName: booking.clientName || user.name,
+                                  recipientEmail: booking.clientEmail || user.email || 'michealnadar68@gmail.com',
+                                  recipientPhone: booking.clientPhone || user.phone,
+                                  serviceTitle: booking.serviceTitle,
+                                  serviceType: booking.serviceType,
+                                  packageTier: booking.packageTier,
+                                  eventDate: booking.eventDate,
+                                  timeWindow: booking.timeWindow,
+                                  guestCount: booking.guestCount,
+                                  totalAmount: booking.totalAmount,
+                                  depositPaid: booking.depositPaid,
+                                  paymentId: booking.paymentId
+                                });
+                                setPreviewEmail(generated);
+                              }
+                            }}
+                            className="px-3 py-2 rounded-xl bg-white border border-[#E5E0D5] hover:border-[#C5A059] hover:bg-[#F7F3EB] text-[#8C6A24] text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                            title="View simulated booking confirmation email"
+                          >
+                            <Mail className="w-3.5 h-3.5 text-[#C5A059]" />
+                            <span>Confirmation Email</span>
+                          </button>
+
                           {booking.vendorId && (
                             <button
                               onClick={() => {
@@ -1038,6 +1072,13 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
             <p>Deposit Paid: {formatINR(selectedReceiptBooking.depositPaid)} (Status: {selectedReceiptBooking.status})</p>
           </div>
         )}
+
+        {/* Full Simulated Email Preview Modal */}
+        <EmailPreviewModal
+          isOpen={!!previewEmail}
+          onClose={() => setPreviewEmail(null)}
+          emailRecord={previewEmail}
+        />
       </div>
     </div>
   );

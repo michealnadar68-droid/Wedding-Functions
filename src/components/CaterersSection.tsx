@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Utensils, 
   MapPin, 
@@ -18,7 +18,9 @@ import {
   Award,
   BookOpen,
   Heart,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  Ban
 } from 'lucide-react';
 import { Caterer, MenuItem, BundleItem } from '../types';
 import { db } from '../services/databaseService';
@@ -27,6 +29,7 @@ import { formatINR, formatPerPlate } from '../utils/formatters';
 interface CaterersSectionProps {
   caterers: Caterer[];
   dietaryFilter: 'all' | 'Pure Veg' | 'Non-Veg & Mixed';
+  selectedDate?: string;
   onSetDietaryFilter: (diet: 'all' | 'Pure Veg' | 'Non-Veg & Mixed') => void;
   onOpenMenuModal: (caterer: Caterer) => void;
   onBookCaterer: (caterer: Caterer, estimatedCost: number, guestCount: number) => void;
@@ -46,6 +49,7 @@ interface CaterersSectionProps {
 export const CaterersSection: React.FC<CaterersSectionProps> = ({
   caterers,
   dietaryFilter,
+  selectedDate,
   onSetDietaryFilter,
   onOpenMenuModal,
   onBookCaterer,
@@ -56,6 +60,13 @@ export const CaterersSection: React.FC<CaterersSectionProps> = ({
   const [expandedMenuCatererId, setExpandedMenuCatererId] = useState<string | null>(null);
   const [guestCounts, setGuestCounts] = useState<Record<string, number>>({});
   const [favRefresh, setFavRefresh] = useState(0);
+  const [dbVersion, setDbVersion] = useState(0);
+
+  useEffect(() => {
+    const handleDbUpdate = () => setDbVersion(v => v + 1);
+    window.addEventListener('elysian_db_update', handleDbUpdate);
+    return () => window.removeEventListener('elysian_db_update', handleDbUpdate);
+  }, []);
 
   const toggleMenuDropdown = (catererId: string) => {
     setExpandedMenuCatererId(prev => (prev === catererId ? null : catererId));
@@ -156,6 +167,8 @@ export const CaterersSection: React.FC<CaterersSectionProps> = ({
             const isMenuExpanded = expandedMenuCatererId === caterer.id;
             const currentGuestCount = guestCounts[caterer.id] || caterer.minimumPlates || 250;
             const estimatedCateringTotal = currentGuestCount * caterer.costPerPlate;
+            const bookedDates = db.getBookedDatesForVendor(caterer.id, caterer.name);
+            const isBookedOnSelectedDate = selectedDate ? bookedDates.includes(selectedDate) : false;
 
             return (
               <div
@@ -438,14 +451,26 @@ export const CaterersSection: React.FC<CaterersSectionProps> = ({
 
                 {/* Bottom Actions: Book, Live Chat, Bundle */}
                 <div className="p-5 sm:p-6 pt-0 border-t border-[#F0EBE1] flex flex-col sm:flex-row items-stretch gap-2.5">
-                  <button
-                    id={`book-caterer-btn-${caterer.id}`}
-                    onClick={() => onBookCaterer(caterer, estimatedCateringTotal, currentGuestCount)}
-                    className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
-                  >
-                    <Calendar className="w-4 h-4 text-[#C5A059]" />
-                    <span>Reserve ({formatINR(estimatedCateringTotal)})</span>
-                  </button>
+                  {isBookedOnSelectedDate ? (
+                    <button
+                      id={`book-caterer-btn-${caterer.id}`}
+                      onClick={() => onBookCaterer(caterer, estimatedCateringTotal, currentGuestCount)}
+                      className="flex-1 py-3 px-4 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                      title={`Booked on ${selectedDate}. Click to choose another date.`}
+                    >
+                      <Ban className="w-4 h-4 text-red-600" />
+                      <span>Booked on {selectedDate} (Switch Date)</span>
+                    </button>
+                  ) : (
+                    <button
+                      id={`book-caterer-btn-${caterer.id}`}
+                      onClick={() => onBookCaterer(caterer, estimatedCateringTotal, currentGuestCount)}
+                      className="flex-1 py-3 px-4 rounded-xl bg-[#1A1A1A] hover:bg-black text-[#C5A059] font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                    >
+                      <Calendar className="w-4 h-4 text-[#C5A059]" />
+                      <span>Reserve ({formatINR(estimatedCateringTotal)})</span>
+                    </button>
+                  )}
 
                   {onOpenChatWithVendor && (
                     <button

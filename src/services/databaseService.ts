@@ -682,7 +682,7 @@ class DatabaseService {
         // On Bookings Real-time Sync from Firestore
         (remoteBookings) => {
           if (Array.isArray(remoteBookings) && remoteBookings.length > 0) {
-            let localBookings = this.getBookings();
+            let localBookings = this.getRawAllBookings();
             const merged = [...remoteBookings];
             localBookings.forEach(lb => {
               if (!merged.some(rb => rb.id === lb.id)) {
@@ -1652,6 +1652,111 @@ class DatabaseService {
   }
 
   // --- BOOKINGS & PRIVACY ISOLATION ---
+  // Returns raw bookings across ALL users to verify real-time platform availability
+  getRawAllBookings(): BookingRecord[] {
+    try {
+      const stored = safeStorage.getItem(STORAGE_KEYS.BOOKINGS);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      return [...SEED_BOOKINGS];
+    } catch {
+      return [...SEED_BOOKINGS];
+    }
+  }
+
+  // Check if a specific date is already booked by ANY user for a venue/vendor
+  isDateBooked(params: {
+    eventDate: string;
+    vendorId?: string;
+    serviceTitle?: string;
+    excludeBookingId?: string;
+  }): boolean {
+    if (!params.eventDate) return false;
+    const targetDate = params.eventDate.split('T')[0].trim();
+    const allBookings = this.getRawAllBookings();
+
+    return allBookings.some(b => {
+      // Cancelled bookings release the date lock
+      if (b.status === 'Cancelled') return false;
+      if (params.excludeBookingId && (b.id === params.excludeBookingId || b.referenceId === params.excludeBookingId)) {
+        return false;
+      }
+      const bDate = (b.eventDate || b.selectedDate || '').split('T')[0].trim();
+      if (bDate !== targetDate) return false;
+
+      // 1. Direct match by vendorId
+      if (params.vendorId && b.vendorId && params.vendorId === b.vendorId) {
+        return true;
+      }
+
+      // 2. Fuzzy match by service title / vendor name
+      if (params.serviceTitle && (b.serviceTitle || b.vendorName)) {
+        const titleA = params.serviceTitle.toLowerCase().trim();
+        const titleB = (b.serviceTitle || b.vendorName || '').toLowerCase().trim();
+        if (titleA === titleB || titleA.includes(titleB) || titleB.includes(titleA)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }
+
+  // Get list of all booked dates (YYYY-MM-DD) for a specific vendor/service
+  getBookedDatesForVendor(vendorId?: string, serviceTitle?: string): string[] {
+    const allBookings = this.getRawAllBookings();
+    const dates = new Set<string>();
+
+    allBookings.forEach(b => {
+      if (b.status === 'Cancelled') return;
+      const bDate = (b.eventDate || b.selectedDate || '').split('T')[0].trim();
+      if (!bDate) return;
+
+      let matches = false;
+      if (vendorId && b.vendorId && vendorId === b.vendorId) {
+        matches = true;
+      } else if (serviceTitle && (b.serviceTitle || b.vendorName)) {
+        const titleA = serviceTitle.toLowerCase().trim();
+        const titleB = (b.serviceTitle || b.vendorName || '').toLowerCase().trim();
+        if (titleA === titleB || titleA.includes(titleB) || titleB.includes(titleA)) {
+          matches = true;
+        }
+      }
+
+      if (matches) {
+        dates.add(bDate);
+      }
+    });
+
+    return Array.from(dates).sort();
+  }
+
+  // Get existing conflicting booking details
+  getBookingConflictDetails(eventDate: string, vendorId?: string, serviceTitle?: string): BookingRecord | null {
+    if (!eventDate) return null;
+    const targetDate = eventDate.split('T')[0].trim();
+    const allBookings = this.getRawAllBookings();
+
+    const match = allBookings.find(b => {
+      if (b.status === 'Cancelled') return false;
+      const bDate = (b.eventDate || b.selectedDate || '').split('T')[0].trim();
+      if (bDate !== targetDate) return false;
+
+      if (vendorId && b.vendorId && vendorId === b.vendorId) return true;
+      if (serviceTitle && (b.serviceTitle || b.vendorName)) {
+        const titleA = serviceTitle.toLowerCase().trim();
+        const titleB = (b.serviceTitle || b.vendorName || '').toLowerCase().trim();
+        if (titleA === titleB || titleA.includes(titleB) || titleB.includes(titleA)) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    return match || null;
+  }
+
   getBookings(userId?: string): BookingRecord[] {
     try {
       const stored = safeStorage.getItem(STORAGE_KEYS.BOOKINGS);
@@ -1679,13 +1784,14 @@ class DatabaseService {
   }
 
   addBooking(booking: Omit<BookingRecord, 'id' | 'createdAt'>): BookingRecord {
-    let allBookings: BookingRecord[] = [];
-    try {
-      const stored = safeStorage.getItem(STORAGE_KEYS.BOOKINGS);
-      allBookings = stored ? JSON.parse(stored) : [...SEED_BOOKINGS];
-    } catch {
-      allBookings = [...SEED_BOOKINGS];
+    const rawDate = (booking.eventDate || booking.selectedDate || '').split('T')[0].trim();
+
+    // STRICT CHECK: Double-booking prevention - if a date is booked, no other person can book it!
+    if (this.isDateBooked({ eventDate: rawDate, vendorId: booking.vendorId, serviceTitle: booking.serviceTitle })) {
+      throw new Error(`Date Conflict: ${rawDate} is already reserved and locked in Escrow by another client for "${booking.serviceTitle}". Please select an alternate date.`);
     }
+
+    let allBookings: BookingRecord[] = this.getRawAllBookings();
 
     const newRecord: BookingRecord = {
       id: `book_rec_${Date.now()}`,

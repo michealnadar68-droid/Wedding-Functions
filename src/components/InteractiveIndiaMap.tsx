@@ -500,11 +500,11 @@ export const InteractiveIndiaMap: React.FC<InteractiveIndiaMapProps> = ({
           </div>
         </div>
 
-        {/* Quick Filter Bar: Category Tabs + City Presets */}
-        <div className="bg-[#F9F7F2] border-b border-[#E5E0D5] px-4 py-2 sm:px-6 flex items-center justify-between gap-2 overflow-x-auto shrink-0 scrollbar-none">
+        {/* Quick Filter Bar: Category Tabs + City Presets - vertically wrapping with zero horizontal scroll */}
+        <div className="bg-[#F9F7F2] border-b border-[#E5E0D5] px-4 py-2 sm:px-6 flex flex-wrap items-center justify-between gap-2 shrink-0">
           
           {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setActiveCategory('all')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${

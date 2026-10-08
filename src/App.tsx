@@ -45,10 +45,13 @@ import { SmartCalendarSyncModal } from './components/SmartCalendarSyncModal';
 import { BulkExportModal } from './components/BulkExportModal';
 import { VendorReviewHighlightsModal } from './components/VendorReviewHighlightsModal';
 import { CredentialsPdfModal } from './components/CredentialsPdfModal';
+import { EmailConfirmationToast } from './components/EmailConfirmationToast';
+import { EmailPreviewModal } from './components/EmailPreviewModal';
 
 import { db } from './services/databaseService';
 import { realtimeChat } from './services/realtimeChatService';
 import { detectCurrentIndianLocation } from './services/locationService';
+import { mockEmailService, SentEmailRecord } from './services/mockEmailService';
 
 import { Sparkles, CheckCircle2, ShoppingBag, ArrowUp, FileText } from 'lucide-react';
 
@@ -121,6 +124,10 @@ export default function App() {
   // Notification Toast State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Simulated Booking Confirmation Email Trigger State
+  const [emailToastRecord, setEmailToastRecord] = useState<SentEmailRecord | null>(null);
+  const [previewEmailModalRecord, setPreviewEmailModalRecord] = useState<SentEmailRecord | null>(null);
+
   // AI Features State
   const [isBudgetPlannerOpen, setIsBudgetPlannerOpen] = useState(false);
   const [isCalendarSyncOpen, setIsCalendarSyncOpen] = useState(false);
@@ -138,6 +145,9 @@ export default function App() {
     image?: string;
   } | null>(null);
 
+  // Track DB booking updates for reactive availability filtering
+  const [bookingsVersion, setBookingsVersion] = useState(0);
+
   // Sync DB changes
   useEffect(() => {
     const handleDbChange = () => {
@@ -146,6 +156,7 @@ export default function App() {
       setCustomCaterers(db.getCustomCaterers());
       setCustomPhotographers(db.getCustomPhotographers());
       setCustomDecors(db.getCustomDecors());
+      setBookingsVersion(v => v + 1);
     };
     window.addEventListener('elysian_db_update', handleDbChange);
     return () => window.removeEventListener('elysian_db_update', handleDbChange);
@@ -461,6 +472,11 @@ export default function App() {
       if (hall.basePrice > filters.maxPrice) return false;
       if (hall.rating < filters.minRating) return false;
       if (filters.availabilityStatus !== 'All' && hall.bookingStatus !== filters.availabilityStatus) return false;
+      if (filters.selectedDate && filters.availabilityStatus === 'Available') {
+        if (db.isDateBooked({ eventDate: filters.selectedDate, vendorId: hall.id, serviceTitle: hall.name })) {
+          return false;
+        }
+      }
       if (filters.hallTopRatedOnly && hall.rating < 4.85) return false;
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();
@@ -475,7 +491,7 @@ export default function App() {
       }
       return true;
     });
-  }, [filters, allHalls]);
+  }, [filters, allHalls, bookingsVersion]);
 
   const filteredCaterers = useMemo(() => {
     return allCaterers.filter(caterer => {
@@ -486,6 +502,11 @@ export default function App() {
       if (caterer.costPerPlate * (caterer.minimumPlates || 200) > filters.maxPrice * 2) return false;
       if (caterer.rating < filters.minRating) return false;
       if (filters.availabilityStatus !== 'All' && caterer.bookingStatus !== filters.availabilityStatus) return false;
+      if (filters.selectedDate && filters.availabilityStatus === 'Available') {
+        if (db.isDateBooked({ eventDate: filters.selectedDate, vendorId: caterer.id, serviceTitle: caterer.name })) {
+          return false;
+        }
+      }
       if (filters.dietaryFilter !== 'all' && caterer.dietaryType !== filters.dietaryFilter) return false;
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();
@@ -500,7 +521,7 @@ export default function App() {
       }
       return true;
     });
-  }, [filters, allCaterers]);
+  }, [filters, allCaterers, bookingsVersion]);
 
   const filteredPhotographers = useMemo(() => {
     return allPhotographers.filter(photo => {
@@ -511,6 +532,11 @@ export default function App() {
       if (photo.pricePerDay > filters.maxPrice) return false;
       if (photo.rating < filters.minRating) return false;
       if (filters.availabilityStatus !== 'All' && photo.bookingStatus !== filters.availabilityStatus) return false;
+      if (filters.selectedDate && filters.availabilityStatus === 'Available') {
+        if (db.isDateBooked({ eventDate: filters.selectedDate, vendorId: photo.id, serviceTitle: photo.name })) {
+          return false;
+        }
+      }
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();
         const matchesName = photo.name.toLowerCase().includes(q) || photo.studioName.toLowerCase().includes(q);
@@ -524,7 +550,7 @@ export default function App() {
       }
       return true;
     });
-  }, [filters, allPhotographers]);
+  }, [filters, allPhotographers, bookingsVersion]);
 
   const filteredDecorations = useMemo(() => {
     return allDecorations.filter(decor => {
@@ -534,6 +560,11 @@ export default function App() {
       if (!isReligionMatch(decor.religiousTraditions)) return false;
       if (decor.price > filters.maxPrice) return false;
       if (decor.rating < filters.minRating) return false;
+      if (filters.selectedDate && filters.availabilityStatus === 'Available') {
+        if (db.isDateBooked({ eventDate: filters.selectedDate, vendorId: decor.id, serviceTitle: decor.name })) {
+          return false;
+        }
+      }
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();
         const matchesName = decor.name.toLowerCase().includes(q) || decor.designerStudio.toLowerCase().includes(q);
@@ -547,7 +578,7 @@ export default function App() {
       }
       return true;
     });
-  }, [filters, allDecorations]);
+  }, [filters, allDecorations, bookingsVersion]);
 
 
   const totalResultsCount = filteredHalls.length + filteredCaterers.length + filteredPhotographers.length + filteredDecorations.length;
@@ -560,7 +591,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#C5A059] selection:text-white">
+    <div className="min-h-screen bg-[#FDFCFB] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#C5A059] selection:text-white overflow-x-hidden w-full max-w-full">
       
       {/* Top Navigation Bar */}
       <Navbar
@@ -736,43 +767,95 @@ export default function App() {
         }}
       />
 
-      {/* Floating Toast Notification */}
-      {toastMessage && (
+      {/* Floating Standard Toast Notification */}
+      {toastMessage && !emailToastRecord && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1A1A1A] text-[#FDFCFB] px-5 py-3 rounded-xl shadow-xl border border-[#C5A059]/40 text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
           <Sparkles className="w-4 h-4 text-[#C5A059]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
+      {/* Simulated Booking Confirmation Email Trigger Toast Notification */}
+      {emailToastRecord && (
+        <EmailConfirmationToast
+          emailRecord={emailToastRecord}
+          onDismiss={() => setEmailToastRecord(null)}
+          onOpenEmailPreview={(record) => setPreviewEmailModalRecord(record)}
+        />
+      )}
+
+      {/* Full Simulated Email Preview Modal */}
+      <EmailPreviewModal
+        isOpen={!!previewEmailModalRecord}
+        onClose={() => setPreviewEmailModalRecord(null)}
+        emailRecord={previewEmailModalRecord}
+      />
+
       {/* Booking & Date Hold Modal */}
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
         bookingData={activeBookingData}
-        onConfirmBooking={(confirmed) => {
-          // Persist to user's database records
-          db.addBooking({
-            referenceId: confirmed.id,
-            serviceType: confirmed.serviceType,
-            vendorId: confirmed.vendorId,
-            serviceTitle: confirmed.vendorName,
-            serviceSubtitle: `${confirmed.location} • ${confirmed.packageName || 'Reserved Package'}`,
-            packageTier: confirmed.packageName,
-            eventDate: confirmed.selectedDate,
-            timeWindow: confirmed.selectedTimeWindow,
-            guestCount: confirmed.guestCount,
-            basePrice: confirmed.estimatedCost,
-            taxAmount: Math.round(confirmed.estimatedCost * 0.08),
-            totalAmount: Math.round(confirmed.estimatedCost * 1.08),
-            depositPaid: confirmed.depositAmount,
-            status: 'Confirmed',
-            clientName: confirmed.clientName,
-            clientEmail: confirmed.clientEmail,
-            clientPhone: confirmed.clientPhone,
-            specialRequests: confirmed.specialRequests
-          });
+        onConfirmBooking={async (confirmed) => {
+          try {
+            const targetDate = (confirmed.eventDate || confirmed.selectedDate || '2026-11-20').split('T')[0];
+            const resolvedClientEmail = confirmed.clientEmail?.trim() || currentUser.email || 'michealnadar68@gmail.com';
+            const resolvedClientName = confirmed.clientName?.trim() || currentUser.name || 'Micheal Sharma';
+            const calcBase = confirmed.itemPrice || confirmed.estimatedCost || 100000;
+            const calcTax = Math.round(calcBase * 0.05);
+            const calcTotal = Math.round(calcBase * 1.05);
+            const calcDeposit = (confirmed as any).depositPaid || confirmed.depositAmount || calcTotal;
+            const paymentId = (confirmed as any).paymentId || (confirmed as any).paymentReference || `pay_rzp_${Math.random().toString(36).substring(2, 8)}`;
 
-          showToast(`Reservation #${confirmed.id} Confirmed! Escrow locked & synced to your Dashboard.`);
+            // Persist to user's database records with date lock verification
+            db.addBooking({
+              referenceId: confirmed.id,
+              serviceType: confirmed.serviceType,
+              vendorId: confirmed.vendorId,
+              serviceTitle: confirmed.serviceTitle || confirmed.vendorName,
+              serviceSubtitle: `${confirmed.location || ''} • ${confirmed.packageName || confirmed.packageTier || 'Reserved Package'}`,
+              packageTier: confirmed.packageName || confirmed.packageTier,
+              eventDate: targetDate,
+              timeWindow: confirmed.timeWindow || confirmed.selectedTimeWindow,
+              guestCount: confirmed.guestCount,
+              basePrice: calcBase,
+              taxAmount: calcTax,
+              totalAmount: calcTotal,
+              depositPaid: calcDeposit,
+              status: 'Confirmed',
+              clientName: resolvedClientName,
+              clientEmail: resolvedClientEmail,
+              clientPhone: confirmed.clientPhone,
+              specialRequests: confirmed.specialRequests,
+              paymentId: paymentId
+            });
+
+            // Trigger the simulated Booking Confirmation Email Service
+            const sentEmail = await mockEmailService.sendBookingConfirmationEmail({
+              bookingReference: confirmed.id,
+              recipientName: resolvedClientName,
+              recipientEmail: resolvedClientEmail,
+              recipientPhone: confirmed.clientPhone,
+              serviceTitle: confirmed.serviceTitle || confirmed.vendorName || 'Wedding Service',
+              serviceType: confirmed.serviceType,
+              serviceSubtitle: confirmed.serviceSubtitle,
+              packageTier: confirmed.packageName || confirmed.packageTier,
+              eventDate: targetDate,
+              timeWindow: confirmed.timeWindow || confirmed.selectedTimeWindow,
+              guestCount: confirmed.guestCount,
+              totalAmount: calcTotal,
+              depositPaid: calcDeposit,
+              paymentId: paymentId,
+              location: confirmed.location,
+              specialRequests: confirmed.specialRequests
+            });
+
+            // Display rich 'Booking Confirmation' Email Trigger Toast notification!
+            setEmailToastRecord(sentEmail);
+            showToast(`Reservation #${confirmed.id} Confirmed! Booking Confirmation email sent to ${resolvedClientEmail}`);
+          } catch (err: any) {
+            showToast(err?.message || 'Conflict: This date is already booked by another person.');
+          }
         }}
       />
 
