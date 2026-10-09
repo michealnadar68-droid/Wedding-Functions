@@ -73,6 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const triggerSmartCalendar = onOpenCalendarSync || onOpenSmartCalendar;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [toolsDropdownOpen, setToolsDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isDetectingNavLocation, setIsDetectingNavLocation] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(db.getTotalUnreadCount());
@@ -298,55 +299,138 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* AI Wedding Budget Planner Trigger */}
-            {onOpenBudgetPlanner && (
+            {/* Quick Tools & Portals Dropdown Trigger (Vertical Structure - Zero Horizontal Squishing) */}
+            <div className="relative">
               <button
-                id="navbar-budget-planner-btn"
-                onClick={onOpenBudgetPlanner}
-                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FAF8F5] border border-[#C5A059]/40 hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
-                title="AI Wedding Budget Strategist"
+                id="navbar-tools-menu-btn"
+                onClick={() => setToolsDropdownOpen(!toolsDropdownOpen)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FAF8F5] border border-[#C5A059]/50 hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
+                title="AI Tools, India Map & 3-Role Portals"
               >
                 <Sparkles className="w-3.5 h-3.5 text-[#C5A059] group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-[#8C6A24]">AI Budget</span>
+                <span className="text-xs font-bold text-[#8C6A24]">Tools & Portals</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-[#888888] transition-transform ${toolsDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
 
-            {/* Smart Calendar Sync Trigger */}
-            {onOpenSmartCalendar && (
-              <button
-                id="navbar-calendar-sync-btn"
-                onClick={onOpenSmartCalendar}
-                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-[#E5E0D5] hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
-                title="Smart Calendar & Auspicious Muhurtham Sync"
-              >
-                <Calendar className="w-3.5 h-3.5 text-[#C5A059] group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-semibold">Calendar</span>
-              </button>
-            )}
+              {toolsDropdownOpen && (
+                <div 
+                  className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#E5E0D5] py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-1 max-h-[85vh] overflow-y-auto"
+                  onClick={() => setToolsDropdownOpen(false)}
+                >
+                  <div className="px-4 py-2 border-b border-[#F0EBE1] flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider">
+                      Quick Portals & AI Tools
+                    </span>
+                    <span className="text-[10px] font-bold bg-[#F7F3EB] text-[#8C6A24] px-2 py-0.5 rounded border border-[#C5A059]/30">
+                      Vertical Access
+                    </span>
+                  </div>
 
-            {/* Interactive India Map Trigger */}
-            <button
-              id="navbar-map-trigger-btn"
-              onClick={onOpenMap}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-[#E5E0D5] hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
-              title="Explore Pan-India Map & Venues Near Me"
-            >
-              <Compass className="w-4 h-4 text-[#C5A059] group-hover:rotate-45 transition-transform" />
-              <span className="text-xs font-semibold hidden md:inline">India Map</span>
-            </button>
+                  {/* 1. AI Budget Planner */}
+                  {onOpenBudgetPlanner && (
+                    <button
+                      onClick={onOpenBudgetPlanner}
+                      className="w-full text-left px-4 py-2.5 hover:bg-[#F9F7F2] transition-colors flex items-start gap-3 cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-[#C5A059]/40 flex items-center justify-center shrink-0 group-hover:bg-[#C5A059] transition-colors">
+                        <Sparkles className="w-4 h-4 text-[#C5A059] group-hover:text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <strong className="text-xs font-bold text-[#1A1A1A] block">
+                          AI Wedding Budget Planner
+                        </strong>
+                        <span className="text-[11px] text-[#666666] block leading-tight">
+                          Smart budget strategist & cost breakdown
+                        </span>
+                      </div>
+                    </button>
+                  )}
 
-            {/* 3-Role Portal Direct Button */}
-            {onOpenMultiRolePortal && (
-              <button
-                id="navbar-portal-trigger-btn"
-                onClick={() => onOpenMultiRolePortal('customer')}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#F7F3EB] border border-[#C5A059]/40 hover:bg-[#EAE4D7] text-[#8C6A24] text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                title="Customer / Admin / Vendor Listing Upload Portal"
-              >
-                <Briefcase className="w-3.5 h-3.5 text-[#C5A059]" />
-                <span>3-Role Portal</span>
-              </button>
-            )}
+                  {/* 2. Interactive India Map */}
+                  <button
+                    onClick={onOpenMap}
+                    className="w-full text-left px-4 py-2.5 hover:bg-[#F9F7F2] transition-colors flex items-start gap-3 cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-white border border-[#E5E0D5] flex items-center justify-center shrink-0 group-hover:border-[#C5A059] transition-colors">
+                      <Compass className="w-4 h-4 text-[#C5A059]" />
+                    </div>
+                    <div className="min-w-0">
+                      <strong className="text-xs font-bold text-[#1A1A1A] block">
+                        Interactive India Map
+                      </strong>
+                      <span className="text-[11px] text-[#666666] block leading-tight">
+                        Venues, caterers & zones across Pan-India
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* 3. 3-Role Unified Portal */}
+                  {onOpenMultiRolePortal && (
+                    <button
+                      onClick={() => onOpenMultiRolePortal('customer')}
+                      className="w-full text-left px-4 py-2.5 hover:bg-[#F9F7F2] transition-colors flex items-start gap-3 cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#F7F3EB] border border-[#C5A059]/40 flex items-center justify-center shrink-0 group-hover:bg-[#1A1A1A] transition-colors">
+                        <Briefcase className="w-4 h-4 text-[#C5A059]" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <strong className="text-xs font-bold text-[#1A1A1A]">
+                            3-Role Portal
+                          </strong>
+                          <span className="text-[9px] font-bold text-[#8C6A24] bg-[#F7F3EB] px-1.5 py-0.2 rounded border border-[#C5A059]/30">
+                            Host • Admin • Vendor
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-[#666666] block leading-tight">
+                          Account dashboard, listings & vendor uploads
+                        </span>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* 4. Smart Calendar Sync */}
+                  {onOpenSmartCalendar && (
+                    <button
+                      onClick={onOpenSmartCalendar}
+                      className="w-full text-left px-4 py-2.5 hover:bg-[#F9F7F2] transition-colors flex items-start gap-3 cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white border border-[#E5E0D5] flex items-center justify-center shrink-0 group-hover:border-[#C5A059] transition-colors">
+                        <Calendar className="w-4 h-4 text-[#C5A059]" />
+                      </div>
+                      <div className="min-w-0">
+                        <strong className="text-xs font-bold text-[#1A1A1A] block">
+                          Smart Muhurtham Calendar
+                        </strong>
+                        <span className="text-[11px] text-[#666666] block leading-tight">
+                          Auspicious wedding dates & calendar reminders
+                        </span>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* 5. Bulk Export & Ledger */}
+                  {onOpenBulkExport && (
+                    <button
+                      onClick={onOpenBulkExport}
+                      className="w-full text-left px-4 py-2.5 hover:bg-[#F9F7F2] transition-colors flex items-start gap-3 cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                        <FileDown className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <strong className="text-xs font-bold text-[#1A1A1A] block">
+                          Bulk Export & Ledger
+                        </strong>
+                        <span className="text-[11px] text-[#666666] block leading-tight">
+                          Export bookings, financial ledger & receipts
+                        </span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Real-time Live Chat Trigger */}
             <button
@@ -571,112 +655,216 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu - Purely Vertical Structure */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-[#E5E0D5] bg-[#FDFCFB] px-4 pt-3 pb-6 space-y-3">
-          <div className="text-xs font-bold text-[#888888] uppercase tracking-wider px-2 flex items-center justify-between">
-            <span>4 Dedicated Service Pages</span>
-            <span className="text-[10px] text-[#C5A059] font-normal">Choose Sector</span>
+        <div className="lg:hidden border-t border-[#E5E0D5] bg-[#FDFCFB] px-4 pt-3 pb-8 space-y-4 max-h-[85vh] overflow-y-auto">
+          
+          {/* Vertical Sectors List */}
+          <div>
+            <div className="text-[10px] font-bold text-[#888888] uppercase tracking-wider px-1 mb-2 flex items-center justify-between">
+              <span>Wedding Sectors</span>
+              <span className="text-[#C5A059] font-normal">Vertical Navigation</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {navItems.map((item) => {
+                const isActive = activeCategory === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      onSelectCategory(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left w-full ${
+                      isActive
+                        ? 'bg-[#1A1A1A] text-[#C5A059] shadow-xs'
+                        : 'bg-white text-[#333333] border border-[#E5E0D5] hover:bg-[#F9F7F2]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={isActive ? 'text-[#C5A059]' : 'text-[#888888]'}>
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </div>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                      isActive ? 'bg-[#C5A059] text-[#1A1A1A]' : 'bg-[#E5E0D5] text-[#666666]'
+                    }`}>
+                      {item.pageTag}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {navItems.map((item) => {
-              const isActive = activeCategory === item.id;
-              return (
+
+          {/* Vertical Portals & Tools */}
+          <div className="pt-2 border-t border-[#E5E0D5]">
+            <div className="text-[10px] font-bold text-[#888888] uppercase tracking-wider px-1 mb-2">
+              AI Tools & Portals (Vertical List)
+            </div>
+            <div className="flex flex-col gap-2">
+              {/* AI Budget */}
+              {onOpenBudgetPlanner && (
                 <button
-                  key={item.id}
                   onClick={() => {
-                    onSelectCategory(item.id);
+                    onOpenBudgetPlanner();
                     setMobileMenuOpen(false);
                   }}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left ${
-                    isActive
-                      ? 'bg-[#1A1A1A] text-[#C5A059] shadow-xs'
-                      : 'bg-white text-[#333333] border border-[#E5E0D5] hover:bg-[#F9F7F2]'
-                  }`}
+                  className="w-full py-2.5 px-3 bg-[#FAF8F5] text-[#8C6A24] border border-[#C5A059]/40 rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
                 >
-                  <span className={`text-[9px] font-bold px-1 py-0.2 rounded shrink-0 ${
-                    isActive ? 'bg-[#C5A059] text-[#1A1A1A]' : 'bg-[#E5E0D5] text-[#666666]'
-                  }`}>
-                    {item.pageTag}
-                  </span>
-                  <span className="truncate">{item.label}</span>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#C5A059]" />
+                    <span>AI Wedding Budget Planner</span>
+                  </div>
+                  <span className="text-[10px] text-[#C5A059] font-normal">AI Powered</span>
                 </button>
-              );
-            })}
+              )}
+
+              {/* India Map */}
+              <button
+                onClick={() => {
+                  onOpenMap();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 px-3 bg-white text-[#1A1A1A] border border-[#E5E0D5] rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-[#C5A059]" />
+                  <span>Pan-India Interactive Map</span>
+                </div>
+                <span className="text-[10px] text-[#888888] font-normal">Venues Near Me</span>
+              </button>
+
+              {/* 3-Role Portal */}
+              {onOpenMultiRolePortal && (
+                <button
+                  onClick={() => {
+                    onOpenMultiRolePortal('customer');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 px-3 bg-[#F7F3EB] text-[#8C6A24] border border-[#C5A059]/40 rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-[#C5A059]" />
+                    <span>3-Role Unified Portal</span>
+                  </div>
+                  <span className="text-[9px] font-bold text-[#8C6A24] bg-white px-1.5 py-0.5 rounded border border-[#C5A059]/30">
+                    Host • Admin • Vendor
+                  </span>
+                </button>
+              )}
+
+              {/* Smart Calendar */}
+              {onOpenSmartCalendar && (
+                <button
+                  onClick={() => {
+                    onOpenSmartCalendar();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 px-3 bg-white text-[#1A1A1A] border border-[#E5E0D5] rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#C5A059]" />
+                    <span>Smart Muhurtham Calendar</span>
+                  </div>
+                  <span className="text-[10px] text-[#888888] font-normal">2026-2027</span>
+                </button>
+              )}
+
+              {/* Bulk Export */}
+              {onOpenBulkExport && (
+                <button
+                  onClick={() => {
+                    onOpenBulkExport();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 px-3 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileDown className="w-4 h-4 text-emerald-600" />
+                    <span>Bulk Export & Ledger</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-700 font-normal">Export Data</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="pt-2 flex flex-col gap-2">
-            <button
-              onClick={() => {
-                onOpenMap();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full py-2.5 bg-[#F7F3EB] text-[#8C6A24] border border-[#C5A059]/40 rounded-lg text-xs font-bold flex items-center justify-center gap-2"
-            >
-              <Compass className="w-4 h-4 text-[#C5A059]" />
-              Explore Interactive Pan-India Map
-            </button>
-
-            {onOpenMultiRolePortal && (
-              <div className="pt-2 border-t border-[#E5E0D5]">
-                <div className="text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-2 px-1">
-                  3-Role Login & Upload Portals
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    onClick={() => {
-                      onOpenMultiRolePortal('customer');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="py-2 px-1 bg-white border border-[#E5E0D5] rounded-lg text-[11px] font-semibold text-center hover:bg-[#F9F7F2]"
-                  >
-                    Customer
-                  </button>
-                  <button
-                    onClick={() => {
-                      onOpenMultiRolePortal('admin');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="py-2 px-1 bg-white border border-[#E5E0D5] rounded-lg text-[11px] font-semibold text-center hover:bg-[#F9F7F2]"
-                  >
-                    Admin
-                  </button>
-                  <button
-                    onClick={() => {
-                      onOpenMultiRolePortal('vendor');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="py-2 px-1 bg-[#1A1A1A] text-[#C5A059] border border-[#C5A059]/40 rounded-lg text-[11px] font-bold text-center"
-                  >
-                    Vendor Upload
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-2">
+          {/* User Account & Actions - Vertical */}
+          <div className="pt-2 border-t border-[#E5E0D5]">
+            <div className="text-[10px] font-bold text-[#888888] uppercase tracking-wider px-1 mb-2">
+              My Profile & Cart
+            </div>
+            <div className="flex flex-col gap-2">
               <button
                 onClick={() => {
                   onOpenDashboard();
                   setMobileMenuOpen(false);
                 }}
-                className="flex-1 py-2.5 bg-[#1A1A1A] text-[#C5A059] rounded-lg text-xs font-semibold flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-3 bg-[#1A1A1A] text-[#C5A059] rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
               >
-                <User className="w-4 h-4" />
-                Dashboard
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-[#C5A059]" />
+                  <span>My Wedding Dashboard & Bookings</span>
+                </div>
+                <span className="text-[10px] text-[#D5CEBE]">{currentUser.name.split('&')[0]}</span>
               </button>
+
               <button
                 onClick={() => {
                   onOpenChat();
                   setMobileMenuOpen(false);
                 }}
-                className="px-4 py-2.5 bg-white text-[#1A1A1A] border border-[#E5E0D5] rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                className="w-full py-2.5 px-3 bg-white text-[#1A1A1A] border border-[#E5E0D5] rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
               >
-                <MessageSquare className="w-4 h-4 text-[#2A4365]" />
-                Chat
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-[#2A4365]" />
+                  <span>Vendor Live Messages</span>
+                </div>
+                {unreadChatCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                    {unreadChatCount} New
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  onOpenDashboard();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 px-3 bg-white text-[#1A1A1A] border border-[#E5E0D5] rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-[#8C2424]" />
+                  <span>Saved Wishlist Items</span>
+                </div>
+                {favoritesCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#C5A059] text-[#1A1A1A] text-[10px] font-bold">
+                    {favoritesCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  onOpenBundleDrawer();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 px-3 bg-linear-to-r from-[#C5A059] to-[#8C6A24] text-white rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer shadow-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-white" />
+                  <span>Dream Wedding Package Drawer</span>
+                </div>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded">
+                  {bundleItems.length} Items
+                </span>
               </button>
             </div>
           </div>
+
         </div>
       )}
     </header>

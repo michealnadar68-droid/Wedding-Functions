@@ -47,6 +47,7 @@ import { VendorReviewHighlightsModal } from './components/VendorReviewHighlights
 import { CredentialsPdfModal } from './components/CredentialsPdfModal';
 import { EmailConfirmationToast } from './components/EmailConfirmationToast';
 import { EmailPreviewModal } from './components/EmailPreviewModal';
+import { VerticalToolsRail } from './components/VerticalToolsRail';
 
 import { db } from './services/databaseService';
 import { realtimeChat } from './services/realtimeChatService';
@@ -124,10 +125,9 @@ export default function App() {
   // Notification Toast State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Simulated Booking Confirmation Email & SMS Trigger State
+  // Simulated Booking Confirmation Email Trigger State
   const [emailToastRecord, setEmailToastRecord] = useState<SentEmailRecord | null>(null);
   const [previewEmailModalRecord, setPreviewEmailModalRecord] = useState<SentEmailRecord | null>(null);
-  const [previewModalTab, setPreviewModalTab] = useState<'email' | 'sms'>('email');
 
   // AI Features State
   const [isBudgetPlannerOpen, setIsBudgetPlannerOpen] = useState(false);
@@ -148,20 +148,25 @@ export default function App() {
 
   // Track DB booking updates for reactive availability filtering
   const [bookingsVersion, setBookingsVersion] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(db.getTotalUnreadCount());
+  const [favoritesCount, setFavoritesCount] = useState(db.getFavorites(currentUser.id).length);
 
   // Sync DB changes
   useEffect(() => {
     const handleDbChange = () => {
-      setCurrentUser(db.getCurrentUser());
+      const updatedUser = db.getCurrentUser();
+      setCurrentUser(updatedUser);
       setCustomHalls(db.getCustomHalls());
       setCustomCaterers(db.getCustomCaterers());
       setCustomPhotographers(db.getCustomPhotographers());
       setCustomDecors(db.getCustomDecors());
+      setUnreadChatCount(db.getTotalUnreadCount());
+      setFavoritesCount(db.getFavorites(updatedUser.id).length);
       setBookingsVersion(v => v + 1);
     };
     window.addEventListener('elysian_db_update', handleDbChange);
     return () => window.removeEventListener('elysian_db_update', handleDbChange);
-  }, []);
+  }, [currentUser.id]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -760,6 +765,31 @@ export default function App() {
 
       </main>
 
+      {/* Floating Vertical Quick Tools Rail (Strictly Vertical - No Horizontal Squishing) */}
+      <VerticalToolsRail
+        onOpenBudgetPlanner={() => setIsBudgetPlannerOpen(true)}
+        onOpenMap={() => {
+          setMapInitialTargetItem(null);
+          setIsMapModalOpen(true);
+        }}
+        onOpenMultiRolePortal={(role) => {
+          setMultiRoleInitialRole(role || 'customer');
+          setIsMultiRolePortalOpen(true);
+        }}
+        onOpenChat={() => {
+          setChatVendorTarget(null);
+          setIsChatModalOpen(true);
+        }}
+        onOpenDashboard={() => {
+          setDashboardInitialTab('favorites');
+          setIsDashboardOpen(true);
+        }}
+        onOpenBundleDrawer={() => setIsBundleDrawerOpen(true)}
+        unreadChatCount={unreadChatCount}
+        favoritesCount={favoritesCount}
+        bundleItemsCount={bundleItems.length}
+      />
+
       {/* Floating Real-time Chat Launcher & Notification Toast */}
       <FloatingChatWidget
         onOpenChat={() => {
@@ -777,24 +807,19 @@ export default function App() {
       )}
 
       {/* Simulated Booking Confirmation Email Trigger Toast Notification */}
-      {/* Rich Simulated Booking Confirmation Email & SMS Trigger Toast */}
       {emailToastRecord && (
         <EmailConfirmationToast
           emailRecord={emailToastRecord}
           onDismiss={() => setEmailToastRecord(null)}
-          onOpenEmailPreview={(record, tab) => {
-            setPreviewEmailModalRecord(record);
-            setPreviewModalTab(tab || 'email');
-          }}
+          onOpenEmailPreview={(record) => setPreviewEmailModalRecord(record)}
         />
       )}
 
-      {/* Full Simulated Email & Phone SMS Preview Modal */}
+      {/* Full Simulated Email Preview Modal */}
       <EmailPreviewModal
         isOpen={!!previewEmailModalRecord}
         onClose={() => setPreviewEmailModalRecord(null)}
         emailRecord={previewEmailModalRecord}
-        initialTab={previewModalTab}
       />
 
       {/* Booking & Date Hold Modal */}
@@ -807,7 +832,6 @@ export default function App() {
             const targetDate = (confirmed.eventDate || confirmed.selectedDate || '2026-11-20').split('T')[0];
             const resolvedClientEmail = confirmed.clientEmail?.trim() || currentUser.email || 'michealnadar68@gmail.com';
             const resolvedClientName = confirmed.clientName?.trim() || currentUser.name || 'Micheal Sharma';
-            const targetPhone = confirmed.clientPhone?.trim() || currentUser.phone || '+91 98200 12345';
             const calcBase = confirmed.itemPrice || confirmed.estimatedCost || 100000;
             const calcTax = Math.round(calcBase * 0.05);
             const calcTotal = Math.round(calcBase * 1.05);
@@ -832,47 +856,34 @@ export default function App() {
               status: 'Confirmed',
               clientName: resolvedClientName,
               clientEmail: resolvedClientEmail,
-              clientPhone: targetPhone,
+              clientPhone: confirmed.clientPhone,
               specialRequests: confirmed.specialRequests,
               paymentId: paymentId
             });
 
-            // Trigger BOTH the simulated Booking Confirmation Email AND SMS Services!
-            const [sentEmail] = await Promise.all([
-              mockEmailService.sendBookingConfirmationEmail({
-                bookingReference: confirmed.id,
-                recipientName: resolvedClientName,
-                recipientEmail: resolvedClientEmail,
-                recipientPhone: targetPhone,
-                serviceTitle: confirmed.serviceTitle || confirmed.vendorName || 'Wedding Service',
-                serviceType: confirmed.serviceType,
-                serviceSubtitle: confirmed.serviceSubtitle,
-                packageTier: confirmed.packageName || confirmed.packageTier,
-                eventDate: targetDate,
-                timeWindow: confirmed.timeWindow || confirmed.selectedTimeWindow,
-                guestCount: confirmed.guestCount,
-                totalAmount: calcTotal,
-                depositPaid: calcDeposit,
-                paymentId: paymentId,
-                location: confirmed.location,
-                specialRequests: confirmed.specialRequests
-              }),
-              mockEmailService.sendBookingConfirmationSms({
-                bookingReference: confirmed.id,
-                recipientName: resolvedClientName,
-                recipientEmail: resolvedClientEmail,
-                recipientPhone: targetPhone,
-                serviceTitle: confirmed.serviceTitle || confirmed.vendorName || 'Wedding Service',
-                serviceType: confirmed.serviceType,
-                eventDate: targetDate,
-                totalAmount: calcTotal,
-                depositPaid: calcDeposit
-              })
-            ]);
+            // Trigger the simulated Booking Confirmation Email Service
+            const sentEmail = await mockEmailService.sendBookingConfirmationEmail({
+              bookingReference: confirmed.id,
+              recipientName: resolvedClientName,
+              recipientEmail: resolvedClientEmail,
+              recipientPhone: confirmed.clientPhone,
+              serviceTitle: confirmed.serviceTitle || confirmed.vendorName || 'Wedding Service',
+              serviceType: confirmed.serviceType,
+              serviceSubtitle: confirmed.serviceSubtitle,
+              packageTier: confirmed.packageName || confirmed.packageTier,
+              eventDate: targetDate,
+              timeWindow: confirmed.timeWindow || confirmed.selectedTimeWindow,
+              guestCount: confirmed.guestCount,
+              totalAmount: calcTotal,
+              depositPaid: calcDeposit,
+              paymentId: paymentId,
+              location: confirmed.location,
+              specialRequests: confirmed.specialRequests
+            });
 
-            // Display rich 'Booking Confirmation' Email & SMS Trigger Toast notification!
+            // Display rich 'Booking Confirmation' Email Trigger Toast notification!
             setEmailToastRecord(sentEmail);
-            showToast(`Reservation #${confirmed.id} Confirmed! Official confirmation sent to ${resolvedClientEmail} & +91 ${targetPhone.replace(/^\+91\s*/, '')}`);
+            showToast(`Reservation #${confirmed.id} Confirmed! Booking Confirmation email sent to ${resolvedClientEmail}`);
           } catch (err: any) {
             showToast(err?.message || 'Conflict: This date is already booked by another person.');
           }
