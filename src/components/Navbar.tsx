@@ -197,8 +197,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Desktop Navigation Links (4 Dedicated Pages + All) */}
-          <nav className="hidden xl:flex items-center gap-1 bg-[#F9F7F2] p-1.5 rounded-full border border-[#E5E0D5] shadow-2xs">
+          {/* Desktop Navigation Links (4 Dedicated Pages + All) - Shown only on full large screen */}
+          <nav className="hidden 2xl:flex items-center gap-1 bg-[#F9F7F2] p-1.5 rounded-full border border-[#E5E0D5] shadow-2xs">
             {navItems.map((item) => {
               const isActive = activeCategory === item.id;
               return (
@@ -226,11 +226,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </nav>
 
-          {/* Right Action Tools: Location Quick Selector + Real-time Chat + Wishlist + User Profile + Bundle */}
+          {/* Right Action Tools: Responsive Clean Layout */}
           <div className="flex items-center gap-2 sm:gap-3">
             
-            {/* Location Selector */}
-            <div className="relative hidden xl:block">
+            {/* Location Selector (Desktop only) */}
+            <div className="relative hidden 2xl:block">
               <button
                 id="location-selector-btn"
                 onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
@@ -299,8 +299,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Quick Tools & Portals Dropdown Trigger (Vertical Structure - Zero Horizontal Squishing) */}
-            <div className="relative">
+            {/* Quick Tools & Portals Dropdown Trigger (Shown only on full large screen) */}
+            <div className="relative hidden 2xl:block">
               <button
                 id="navbar-tools-menu-btn"
                 onClick={() => setToolsDropdownOpen(!toolsDropdownOpen)}
@@ -432,11 +432,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Real-time Live Chat Trigger */}
+            {/* Real-time Live Chat Trigger (Shown on large screen, floating widget handles minimized) */}
             <button
               id="navbar-chat-trigger-btn"
               onClick={onOpenChat}
-              className="relative p-2.5 rounded-lg bg-white border border-[#E5E0D5] hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
+              className="relative hidden 2xl:flex p-2.5 rounded-lg bg-white border border-[#E5E0D5] hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
               title="Live Vendor Chat"
             >
               <MessageSquare className="w-4 h-4 text-[#2A4365] group-hover:scale-110 transition-transform" />
@@ -447,11 +447,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* User Wishlist Trigger (Opens Dashboard to Favorites tab) */}
+            {/* User Wishlist Trigger (Shown on large screen, drawer handles minimized) */}
             <button
               id="navbar-wishlist-trigger-btn"
               onClick={onOpenDashboard}
-              className="relative p-2.5 rounded-lg bg-white border border-[#E5E0D5] hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
+              className="relative hidden 2xl:flex p-2.5 rounded-lg bg-white border border-[#E5E0D5] hover:border-[#C5A059] text-[#1A1A1A] hover:bg-[#F9F7F2] transition-all cursor-pointer shadow-2xs group"
               title="Saved Wishlist"
             >
               <Heart className="w-4 h-4 text-[#8C2424] group-hover:scale-110 transition-transform" />
@@ -462,8 +462,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* User Account / VIP Dashboard Menu */}
-            <div className="relative">
+            {/* User Account / VIP Dashboard Menu (Compact on medium, drawer on small) */}
+            <div className="relative hidden sm:block">
               <button
                 id="user-profile-menu-btn"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
@@ -480,10 +480,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {currentUser.name.charAt(0)}
                   </div>
                 )}
-                <span className="text-xs font-bold text-[#1A1A1A] hidden md:inline max-w-[120px] truncate">
+                <span className="text-xs font-bold text-[#1A1A1A] hidden 2xl:inline max-w-[120px] truncate">
                   {currentUser.id === 'guest' ? 'Sign In' : currentUser.name.split('&')[0]}
                 </span>
-                <ChevronDown className="w-3 h-3 text-[#888888] hidden sm:block" />
+                <ChevronDown className="w-3 h-3 text-[#888888] hidden 2xl:block" />
               </button>
 
               {userDropdownOpen && (
@@ -641,11 +641,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </button>
 
-            {/* Mobile Menu Toggle */}
+            {/* Mobile Menu Toggle (Shown on all minimized / compact screens) */}
             <button
               id="mobile-nav-toggle-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="xl:hidden p-2 rounded-lg text-[#1A1A1A] hover:bg-[#F9F7F2] cursor-pointer"
+              className="2xl:hidden p-2 rounded-lg text-[#1A1A1A] hover:bg-[#F9F7F2] cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
@@ -655,10 +655,36 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Drawer Menu - Purely Vertical Structure */}
+      {/* Mobile Drawer Menu - Purely Vertical Structure for Minimized Screens */}
       {mobileMenuOpen && (
-        <div className="xl:hidden border-t border-[#E5E0D5] bg-[#FDFCFB] px-4 pt-3 pb-8 space-y-4 max-h-[85vh] overflow-y-auto">
+        <div className="2xl:hidden border-t border-[#E5E0D5] bg-[#FDFCFB] px-4 pt-3 pb-8 space-y-4 max-h-[85vh] overflow-y-auto">
           
+          {/* Quick Wedding Zone Selector in Drawer */}
+          <div className="bg-white p-3 rounded-xl border border-[#E5E0D5] space-y-2">
+            <div className="flex items-center justify-between text-[10px] font-bold text-[#888888] uppercase tracking-wider">
+              <span>Selected Wedding Zone</span>
+              <button
+                onClick={handleNavDetectLocation}
+                disabled={isDetectingNavLocation}
+                className="text-[#C5A059] hover:underline flex items-center gap-1 cursor-pointer font-bold"
+              >
+                <Navigation className="w-3 h-3" />
+                <span>{isDetectingNavLocation ? 'Locating...' : 'GPS Detect'}</span>
+              </button>
+            </div>
+            <select
+              value={selectedLocation}
+              onChange={(e) => onSelectLocation(e.target.value)}
+              className="w-full text-xs font-semibold p-2.5 bg-[#F9F7F2] border border-[#E5E0D5] rounded-lg text-[#1A1A1A] focus:outline-none focus:border-[#C5A059]"
+            >
+              {LOCATIONS_LIST.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Vertical Sectors List */}
           <div>
             <div className="text-[10px] font-bold text-[#888888] uppercase tracking-wider px-1 mb-2 flex items-center justify-between">
