@@ -54,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({
     <footer className="bg-[#1A1A1A] text-stone-300 border-t border-black/40">
       
       {/* FAQ Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-white/10">
+      <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-white/10">
         <div className="text-center max-w-2xl mx-auto mb-8">
           <span className="text-xs font-bold text-[#C5A059] uppercase tracking-widest block mb-1">
             Frequently Asked Questions
@@ -91,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({
       </div>
 
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           
           {/* Brand Info */}

@@ -39,12 +39,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#FDFCFB] via-[#F9F7F2] to-[#FDFCFB] border-b border-[#E5E0D5] pt-10 pb-14 sm:pt-14 sm:pb-18">
       {/* Subtle decorative background flourishes */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none opacity-40">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1600px] h-full pointer-events-none opacity-40">
         <div className="absolute -top-24 left-10 w-96 h-96 rounded-full bg-[#C5A059]/10 blur-3xl" />
         <div className="absolute top-10 right-10 w-80 h-80 rounded-full bg-[#E5E0D5]/30 blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Editorial Subheading badge */}
         <div className="flex justify-center mb-4">

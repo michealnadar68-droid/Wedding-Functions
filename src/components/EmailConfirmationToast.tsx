@@ -1,11 +1,11 @@
-import React from 'react';
-import { Mail, CheckCircle2, X, ExternalLink, ShieldCheck, Calendar, User, DollarSign, Sparkles, Smartphone, MessageSquare } from 'lucide-react';
-import { SentEmailRecord, mockEmailService } from '../services/mockEmailService';
+import React, { useState } from 'react';
+import { Mail, CheckCircle2, X, ExternalLink, ShieldCheck, Calendar, User, DollarSign, Sparkles } from 'lucide-react';
+import { SentEmailRecord } from '../services/mockEmailService';
 
 interface EmailConfirmationToastProps {
   emailRecord: SentEmailRecord;
   onDismiss: () => void;
-  onOpenEmailPreview?: (record: SentEmailRecord, tab?: 'email' | 'sms') => void;
+  onOpenEmailPreview?: (record: SentEmailRecord) => void;
 }
 
 export const EmailConfirmationToast: React.FC<EmailConfirmationToastProps> = ({
@@ -13,14 +13,12 @@ export const EmailConfirmationToast: React.FC<EmailConfirmationToastProps> = ({
   onDismiss,
   onOpenEmailPreview
 }) => {
-  const smsRecord = mockEmailService.getSentSmsByBookingId(emailRecord.bookingReference) ||
-    mockEmailService.getSentSms()[0];
-  const targetPhone = smsRecord?.recipientPhone || emailRecord.recipientPhone || '+91 98200 12345';
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <div
       id="email-confirmation-toast"
-      className="fixed bottom-6 right-4 sm:right-6 z-50 max-w-md w-[calc(100vw-2rem)] bg-[#1A1A1A] text-white rounded-2xl shadow-2xl border-2 border-[#C5A059] p-4 sm:p-5 animate-in slide-in-from-bottom-5 fade-in duration-300 backdrop-blur-md"
+      className="fixed bottom-6 right-4 sm:right-6 z-50 max-w-[calc(100vw-2rem)] sm:max-w-md bg-[#1A1A1A] text-white rounded-2xl shadow-2xl border-2 border-[#C5A059] p-4 sm:p-5 animate-in slide-in-from-bottom-5 fade-in duration-300 backdrop-blur-md"
       role="alert"
     >
       {/* Toast Top Bar */}
@@ -32,14 +30,14 @@ export const EmailConfirmationToast: React.FC<EmailConfirmationToastProps> = ({
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold text-[#C5A059] uppercase tracking-wider">
-                Simulated Notification Trigger
+                Simulated Email Trigger
               </span>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                <CheckCircle2 className="w-2.5 h-2.5" /> Dispatched
+                <CheckCircle2 className="w-2.5 h-2.5" /> Sent
               </span>
             </div>
             <h4 className="text-sm font-bold text-white leading-tight mt-0.5">
-              Email &amp; SMS Confirmations Sent
+              Booking Confirmation Delivered
             </h4>
           </div>
         </div>
@@ -53,31 +51,18 @@ export const EmailConfirmationToast: React.FC<EmailConfirmationToastProps> = ({
         </button>
       </div>
 
-      {/* Dual Recipient info: Email & Phone */}
-      <div className="py-2.5 space-y-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
-          <div className="p-2 bg-stone-900/80 rounded-lg border border-stone-800 flex items-center justify-between">
-            <span className="text-stone-400 flex items-center gap-1">
-              <Mail className="w-3 h-3 text-[#C5A059]" /> Email:
-            </span>
-            <span className="font-mono font-bold text-amber-300 truncate max-w-[130px]">
-              {emailRecord.recipientEmail}
-            </span>
-          </div>
-
-          <div className="p-2 bg-stone-900/80 rounded-lg border border-stone-800 flex items-center justify-between">
-            <span className="text-stone-400 flex items-center gap-1">
-              <Smartphone className="w-3 h-3 text-emerald-400" /> Phone:
-            </span>
-            <span className="font-mono font-bold text-emerald-300">
-              +91 {targetPhone.replace(/^\+91\s*/, '')}
-            </span>
-          </div>
+      {/* Recipient info & Subject */}
+      <div className="py-2.5 space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] text-stone-300">
+          <span>Recipient:</span>
+          <span className="font-mono font-bold text-emerald-400 truncate max-w-[240px]">
+            {emailRecord.recipientEmail}
+          </span>
         </div>
 
         <div className="p-2.5 bg-stone-900/90 rounded-xl border border-stone-800 text-xs space-y-1">
           <div className="text-[10px] uppercase font-bold text-[#C5A059] tracking-wider">
-            Booking Subject
+            Subject
           </div>
           <p className="font-semibold text-stone-100 text-xs leading-snug line-clamp-2">
             {emailRecord.subject}
@@ -127,31 +112,20 @@ export const EmailConfirmationToast: React.FC<EmailConfirmationToastProps> = ({
       {/* Escrow & Delivery Assurance Note */}
       <div className="flex items-center gap-1.5 text-[10px] text-stone-400 pt-1 pb-2">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-        <span>100% Escrow deposit locked • Confirmation triggered to phone no &amp; mail</span>
+        <span>100% Escrow deposit confirmed • Date locked against double bookings</span>
       </div>
 
       {/* Toast Actions */}
       <div className="flex items-center gap-2 pt-1">
         {onOpenEmailPreview && (
-          <>
-            <button
-              type="button"
-              onClick={() => onOpenEmailPreview(emailRecord, 'email')}
-              className="flex-1 py-2 px-2.5 rounded-xl bg-gradient-to-r from-[#C5A059] to-[#8C6A24] hover:opacity-95 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer shadow-md transition-all"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>View Email</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onOpenEmailPreview(emailRecord, 'sms')}
-              className="flex-1 py-2 px-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-emerald-400 hover:text-emerald-300 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer border border-stone-700 transition-all"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>View SMS</span>
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => onOpenEmailPreview(emailRecord)}
+            className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-[#C5A059] to-[#8C6A24] hover:opacity-95 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition-all"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>View Simulated Email</span>
+          </button>
         )}
 
         <button
@@ -165,4 +139,3 @@ export const EmailConfirmationToast: React.FC<EmailConfirmationToastProps> = ({
     </div>
   );
 };
-

@@ -117,8 +117,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-[#FDFCFB]/95 backdrop-blur-md border-b border-[#E5E0D5] shadow-xs transition-all">
       {/* Top micro-bar */}
-      <div className="bg-[#1A1A1A] text-[#D5CEBE] text-xs py-1.5 px-4 sm:px-8 border-b border-[#2C2A28]">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-[#1A1A1A] text-[#D5CEBE] text-xs py-1.5 px-4 sm:px-8 border-b border-[#2C2A28] w-full">
+        <div className="max-w-[1600px] w-full mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-[#C5A059] font-medium tracking-wide">
               <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" /> Auspicious Muhurtham Dates 2026-2027 Open
@@ -155,7 +155,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => onOpenMultiRolePortal('vendor')}
                   className="text-[#C5A059] hover:underline font-bold px-1 flex items-center gap-1 cursor-pointer"
                 >
-                  <Building2 className="w-3 h-3" /> Vendor Upload
+                  <Building2 className="w-3.5 h-3.5" /> Vendor Upload
                 </button>
               </div>
             )}
@@ -170,13 +170,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
           {/* Brand Logo */}
           <div 
             onClick={() => onSelectCategory('all')} 
-            className="flex items-center gap-3.5 cursor-pointer group"
+            className="flex items-center gap-3.5 cursor-pointer group shrink-0"
             id="brand-logo"
           >
             <div className="w-11 h-11 rounded-lg bg-[#1A1A1A] flex items-center justify-center shadow-xs text-[#C5A059] group-hover:border-[#C5A059] transition-all duration-200 border border-[#C5A059]/40">
@@ -184,21 +184,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-serif-luxury text-2xl font-bold tracking-wider text-[#1A1A1A] group-hover:text-[#C5A059] transition-colors">
+                <span className="font-serif-luxury text-xl sm:text-2xl font-bold tracking-wider text-[#1A1A1A] group-hover:text-[#C5A059] transition-colors">
                   ELYSIAN
                 </span>
-                <span className="font-serif-luxury text-2xl font-light text-[#C5A059] tracking-widest">
+                <span className="font-serif-luxury text-xl sm:text-2xl font-light text-[#C5A059] tracking-widest">
                   WEDLOCK
                 </span>
               </div>
-              <p className="text-[10px] tracking-[0.2em] text-[#737373] uppercase font-medium">
+              <p className="text-[9px] sm:text-[10px] tracking-[0.2em] text-[#737373] uppercase font-medium">
                 Haute Wedding Booking Platform
               </p>
             </div>
           </div>
 
           {/* Desktop Navigation Links (4 Dedicated Pages + All) */}
-          <nav className="hidden lg:flex items-center gap-1 bg-[#F9F7F2] p-1.5 rounded-full border border-[#E5E0D5] shadow-2xs">
+          <nav className="hidden xl:flex items-center gap-1 bg-[#F9F7F2] p-1.5 rounded-full border border-[#E5E0D5] shadow-2xs">
             {navItems.map((item) => {
               const isActive = activeCategory === item.id;
               return (
@@ -645,7 +645,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="mobile-nav-toggle-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-[#1A1A1A] hover:bg-[#F9F7F2] cursor-pointer"
+              className="xl:hidden p-2 rounded-lg text-[#1A1A1A] hover:bg-[#F9F7F2] cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
@@ -657,7 +657,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Drawer Menu - Purely Vertical Structure */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-[#E5E0D5] bg-[#FDFCFB] px-4 pt-3 pb-8 space-y-4 max-h-[85vh] overflow-y-auto">
+        <div className="xl:hidden border-t border-[#E5E0D5] bg-[#FDFCFB] px-4 pt-3 pb-8 space-y-4 max-h-[85vh] overflow-y-auto">
           
           {/* Vertical Sectors List */}
           <div>
