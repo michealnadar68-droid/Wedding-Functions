@@ -852,7 +852,7 @@ export const UserProfileDashboard: React.FC<UserProfileDashboardProps> = ({
                             title="View simulated booking confirmation email"
                           >
                             <Mail className="w-3.5 h-3.5 text-[#C5A059]" />
-                            <span>Confirmation Email</span>
+                            <span>Email &amp; SMS Notice</span>
                           </button>
 
                           {booking.vendorId && (

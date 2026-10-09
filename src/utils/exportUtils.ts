@@ -5,7 +5,7 @@ import { BookingRecord } from '../types';
  */
 export function exportBookingsToCsv(bookings: BookingRecord[], filename = 'elysian-bookings-report.csv') {
   if (!bookings || bookings.length === 0) {
-    alert('No bookings available to export.');
+    console.warn('No bookings available to export.');
     return;
   }
 
@@ -80,7 +80,7 @@ export function exportBookingsToCsv(bookings: BookingRecord[], filename = 'elysi
  */
 export function exportBookingsToJson(bookings: BookingRecord[], filename = 'elysian-bookings-ledger.json') {
   if (!bookings || bookings.length === 0) {
-    alert('No bookings available to export.');
+    console.warn('No bookings available to export.');
     return;
   }
 
@@ -109,7 +109,7 @@ export function exportBookingsToJson(bookings: BookingRecord[], filename = 'elys
  */
 export function printBookingSummaryReport(bookings: BookingRecord[], title = 'Elysian Wedlock - Master Bookings Report') {
   if (!bookings || bookings.length === 0) {
-    alert('No bookings to print.');
+    console.warn('No bookings to print.');
     return;
   }
 
@@ -118,7 +118,8 @@ export function printBookingSummaryReport(bookings: BookingRecord[], title = 'El
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Please allow popups to generate printable report.');
+    console.warn('Popups blocked or not available in frame.');
+    window.print();
     return;
   }
 
